@@ -1,18 +1,18 @@
-import React, { useContext } from "react";
-import { TokenContext } from "../context/TokenContext";
+import React from "react";
+import { useToken } from "../context/TokenContext";
 import Card from "../components/ui/Card";
 
 const MyBetsPage = () => {
-  const { myBets } = useContext(TokenContext);
+  const { bets } = useToken();
 
   return (
     <div className="max-w-2xl mx-auto px-2 py-8">
       <h2 className="text-2xl font-bold neon-purple mb-6">My Bets</h2>
-      {myBets.length === 0 ? (
+      {bets.length === 0 ? (
         <div className="text-[#bdb4e6] text-center">No bets placed yet.</div>
       ) : (
         <div className="space-y-4">
-          {myBets.map((bet, idx) => (
+          {bets.map((bet, idx) => (
             <Card key={idx} className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="font-semibold neon-purple mb-1">{bet.question}</div>
