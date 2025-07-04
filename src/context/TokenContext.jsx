@@ -1,54 +1,69 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { betsAPI } from '../services/api';
 
-export const TokenContext = createContext();
+const TokenContext = createContext();
 
-/**
- * TokenProvider manages the user's token balance and bet history.
- * @param {object} props
- * @param {React.ReactNode} props.children
- */
+export const useToken = () => {
+  const context = useContext(TokenContext);
+  if (!context) {
+    throw new Error('useToken must be used within a TokenProvider');
+  }
+  return context;
+};
+
 export const TokenProvider = ({ children }) => {
-  const [tokens, setTokens] = useState(100);
-  const [myBets, setMyBets] = useState([]); // Array of { betId, question, option, amount, multiplier, win, timestamp }
+  const { user, updateUser } = useAuth();
+  const [bets, setBets] = useState([]);
 
-  /**
-   * Deduct tokens from the user's balance.
-   * @param {number} amount
-   * @returns {boolean} success
-   */
   const deductTokens = (amount) => {
-    if (tokens >= amount) {
-      setTokens((t) => t - amount);
-      return true;
-    }
-    return false;
+    if (!user || user.tokens < amount) return false;
+    
+    const updatedUser = { ...user, tokens: user.tokens - amount };
+    updateUser(updatedUser);
+    return true;
   };
 
-  /**
-   * Credit winnings to the user's balance.
-   * @param {number} amount
-   */
   const creditTokens = (amount) => {
-    setTokens((t) => t + amount);
+    if (!user) return false;
+    
+    const updatedUser = { ...user, tokens: user.tokens + amount };
+    updateUser(updatedUser);
+    return true;
   };
 
-  /**
-   * Add a bet to the user's bet history and optionally credit winnings.
-   * @param {object} bet
-   * @param {boolean} creditWin
-   */
-  const addBet = (bet, creditWin = false) => {
-    setMyBets((prev) => [
-      { ...bet, timestamp: new Date().toISOString() },
-      ...prev,
-    ]);
-    if (creditWin && bet.win) {
-      creditTokens(bet.win);
+  const addBet = async (betData, isWin = false) => {
+    try {
+      const response = await betsAPI.placeBet(betData);
+      const { bet, tokens } = response.data;
+      
+      // Update user tokens
+      const updatedUser = { ...user, tokens };
+      updateUser(updatedUser);
+      
+      // Add bet to local state
+      setBets(prev => [...prev, bet]);
+      
+      return { success: true, bet };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Failed to place bet' 
+      };
     }
+  };
+
+  const value = {
+    tokens: user?.tokens || 0,
+    winnings: user?.winnings || 0,
+    bets,
+    deductTokens,
+    creditTokens,
+    addBet,
   };
 
   return (
-    <TokenContext.Provider value={{ tokens, deductTokens, creditTokens, myBets, addBet }}>
+    <TokenContext.Provider value={value}>
       {children}
     </TokenContext.Provider>
   );

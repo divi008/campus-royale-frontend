@@ -1,5 +1,6 @@
-import React, { useContext, useState, useRef } from "react";
-import { TokenContext } from "../context/TokenContext";
+import React, { useContext, useState, useRef, useEffect } from "react";
+import { useToken } from "../context/TokenContext";
+import { questionsAPI } from "../services/api";
 import Card from "../components/ui/Card";
 
 const DUMMY_BETS = [
@@ -52,14 +53,10 @@ const FLUO_ORANGE = '#FFAC1C';
 const CYAN = '#00eaff';
 
 const HomePage = () => {
-  const { deductTokens, tokens, addBet, creditTokens } = useContext(TokenContext);
+  const { deductTokens, tokens, addBet, creditTokens } = useToken();
   const [message, setMessage] = useState("");
-  const [betOptions, setBetOptions] = useState(() => {
-    return DUMMY_BETS.reduce((acc, bet) => {
-      acc[bet.id] = bet.options.map((opt) => ({ ...opt }));
-      return acc;
-    }, {});
-  });
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [betAmounts, setBetAmounts] = useState({});
   const [expanded, setExpanded] = useState(null);
   const [selectedOption, setSelectedOption] = useState({});
@@ -67,6 +64,23 @@ const HomePage = () => {
   const [placed, setPlaced] = useState({});
   const [confetti, setConfetti] = useState([]);
   const cardRefs = useRef({});
+
+  // Fetch questions from backend
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await questionsAPI.getAll();
+        setQuestions(response.data);
+      } catch (error) {
+        console.error('Failed to fetch questions:', error);
+        setMessage('Failed to load questions');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   const handleExpand = (betId) => {
     setExpanded(expanded === betId ? null : betId);
@@ -285,44 +299,29 @@ const HomePage = () => {
     }
   };
 
-  const handleConfirm = (betId) => {
-    const amount = parseInt(betAmounts[betId], 10);
+  const handleConfirm = async (questionId) => {
+    const amount = parseInt(betAmounts[questionId], 10);
     if (!amount || amount <= 0) {
       setMessage("Enter a valid amount!");
       setTimeout(() => setMessage(""), 2000);
       return;
     }
-    if (deductTokens(amount)) {
-      setBetOptions((prev) => {
-        const updated = { ...prev };
-        updated[betId] = updated[betId].map((opt) =>
-          opt.label === selectedOption[betId] ? { ...opt, tokens: opt.tokens + amount } : opt
-        );
-        return updated;
-      });
-      const bet = DUMMY_BETS.find((b) => b.id === betId);
-      const optionsWithUpdatedTokens = betOptions[bet.id].map((opt) =>
-        opt.label === selectedOption[bet.id] ? { ...opt, tokens: opt.tokens + amount } : opt
-      );
-      const multipliers = calculateMultipliers(optionsWithUpdatedTokens);
-      const option = multipliers.find((o) => o.label === selectedOption[bet.id]);
-      const winAmount = amount * option.multiplier;
-      addBet({
-        betId,
-        question: bet.title,
-        option: selectedOption[bet.id],
-        amount,
-        multiplier: option.multiplier,
-        win: winAmount,
-      }, true);
-      setMessage(`Bet placed on "${selectedOption[bet.id]}"! (-${amount} tokens, +${winAmount} win)`);
-      setConfirming((prev) => ({ ...prev, [betId]: false }));
-      setPlaced((prev) => ({ ...prev, [betId]: true }));
-      triggerCelebration(winAmount > 0);
-      animateCard(betId);
-      setTimeout(() => setPlaced((prev) => ({ ...prev, [betId]: false })), 2000);
+
+    const result = await addBet({
+      questionId,
+      option: selectedOption[questionId],
+      amount
+    });
+
+    if (result.success) {
+      setMessage(`Bet placed on "${selectedOption[questionId]}"! (-${amount} tokens)`);
+      setConfirming((prev) => ({ ...prev, [questionId]: false }));
+      setPlaced((prev) => ({ ...prev, [questionId]: true }));
+      triggerCelebration(true);
+      animateCard(questionId);
+      setTimeout(() => setPlaced((prev) => ({ ...prev, [questionId]: false })), 2000);
     } else {
-      setMessage("Not enough tokens!");
+      setMessage(result.error || "Failed to place bet!");
       setTimeout(() => setMessage(""), 2000);
     }
   };
@@ -332,29 +331,33 @@ const HomePage = () => {
       {message && (
         <div className="mb-4 text-center text-base font-display text-gold font-bold animate-pulse drop-shadow-gold">{message}</div>
       )}
-      {DUMMY_BETS.map((bet) => {
-        const options = betOptions[bet.id];
+      {loading ? (
+        <div className="text-center text-gold text-xl">Loading questions...</div>
+      ) : questions.length === 0 ? (
+        <div className="text-center text-gold text-xl">No questions available</div>
+      ) : questions.map((question) => {
+        const options = question.options;
         const multipliers = calculateMultipliers(options);
         const chances = calculateChances(options);
-        const totalBets = options.reduce((sum, o) => sum + o.tokens, 0);
-        const isExpanded = expanded === bet.id;
+        const totalBets = options.reduce((sum, o) => sum + o.votes, 0);
+        const isExpanded = expanded === question._id;
         return (
-          <div key={bet.id} className="mb-12">
+          <div key={question._id} className="mb-12">
             <div
               className="transition-all duration-500"
-              onClick={() => handleExpand(bet.id)}
+              onClick={() => handleExpand(question._id)}
             >
-              <Card ref={el => cardRefs.current[bet.id] = el} className={`cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 ${isExpanded ? 'ring-2 ring-gold' : ''}`}>
+              <Card ref={el => cardRefs.current[question._id] = el} className={`cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 ${isExpanded ? 'ring-2 ring-gold' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide">{bet.title}</h3>
+                  <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide">{question.title}</h3>
                   <span className="text-xs text-gold bg-[#facc1533] px-3 py-1 rounded-full font-bold shadow">{totalBets} bets</span>
                 </div>
-                <p className="text-textsecondary mb-3 text-base font-sans">{bet.description}</p>
+                <p className="text-textsecondary mb-3 text-base font-sans">{question.description}</p>
                 <div className="flex gap-6 text-sm mb-2">
                   {options.map((opt, i) => (
                     <div key={opt.label} className="flex flex-col items-center">
                       <span className="font-bold" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
-                      <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.tokens} bets</span>
+                      <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
                       <span className="text-textsecondary">x{multipliers[i].multiplier}</span>
                     </div>
                   ))}
@@ -371,64 +374,64 @@ const HomePage = () => {
                     {multipliers.map((opt, i) => (
                       <button
                         key={opt.label}
-                        className={`flex-1 px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide ${selectedOption[bet.id] === opt.label
+                        className={`flex-1 px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide ${selectedOption[question._id] === opt.label
                           ? (i % 2 === 0
                             ? 'bg-[#39FF14] border-[#39FF14] text-black shadow-lg'
                             : 'bg-[#FFAC1C] border-[#FFAC1C] text-black shadow-lg')
                           : 'bg-transparent border-cardbg text-[#00eaff] hover:bg-cardbg/60'}`}
-                        style={{ fontFamily: 'inherit', color: selectedOption[bet.id] === opt.label ? undefined : '#00eaff' }}
-                        onClick={() => handleSelectOption(bet.id, opt.label)}
+                        style={{ fontFamily: 'inherit', color: selectedOption[question._id] === opt.label ? undefined : '#00eaff' }}
+                        onClick={() => handleSelectOption(question._id, opt.label)}
                       >
                         {opt.label} <span className="ml-2 text-xs font-bold">x{opt.multiplier}</span>
-                        <span className="ml-2 text-xs text-textsecondary">{options[i].tokens} bets</span>
+                        <span className="ml-2 text-xs text-textsecondary">{options[i].votes} bets</span>
                       </button>
                     ))}
                   </div>
-                  {selectedOption[bet.id] && (
+                  {selectedOption[question._id] && (
                     <div className="flex flex-col gap-3">
                       <input
                         type="number"
                         min="1"
-                        value={betAmounts[bet.id] || ""}
-                        onChange={(e) => handleAmountChange(bet.id, e.target.value)}
+                        value={betAmounts[question._id] || ""}
+                        onChange={(e) => handleAmountChange(question._id, e.target.value)}
                         placeholder="Enter amount"
                         className="border-2 border-gold bg-cardbg text-gold rounded-xl px-4 py-3 text-lg font-display focus:outline-none focus:ring-2 focus:ring-gold glass"
                       />
                       <div className="flex items-center gap-4">
                         <span className="text-base text-gold font-display font-semibold">
-                          Win: {betAmounts[bet.id] && multipliers.find((o) => o.label === selectedOption[bet.id]) ? (parseInt(betAmounts[bet.id], 10) * multipliers.find((o) => o.label === selectedOption[bet.id]).multiplier).toLocaleString() : 0} tokens
+                          Win: {betAmounts[question._id] && multipliers.find((o) => o.label === selectedOption[question._id]) ? (parseInt(betAmounts[question._id], 10) * multipliers.find((o) => o.label === selectedOption[question._id]).multiplier).toLocaleString() : 0} tokens
                         </span>
                         <button
-                          className={`px-6 py-2 rounded-xl font-bold shadow-lg border-2 font-display text-lg tracking-wide transition-all ${placed[bet.id]
+                          className={`px-6 py-2 rounded-xl font-bold shadow-lg border-2 font-display text-lg tracking-wide transition-all ${placed[question._id]
                             ? 'bg-gold border-gold text-velvetgreen animate-pulse'
-                            : confirming[bet.id]
+                            : confirming[question._id]
                               ? 'bg-[#00eaff] border-[#00eaff] text-black hover:brightness-110'
-                              : selectedOption[bet.id]
-                                ? (multipliers.findIndex((o) => o.label === selectedOption[bet.id]) % 2 === 0
+                              : selectedOption[question._id]
+                                ? (multipliers.findIndex((o) => o.label === selectedOption[question._id]) % 2 === 0
                                   ? 'bg-[#39FF14] border-[#39FF14] text-black hover:brightness-110'
                                   : 'bg-[#FFAC1C] border-[#FFAC1C] text-black hover:brightness-110')
                                 : 'bg-cardbg border-gold text-gold hover:brightness-110'}`}
-                          onClick={() => setConfirming((prev) => ({ ...prev, [bet.id]: true }))}
-                          disabled={placed[bet.id]}
+                          onClick={() => setConfirming((prev) => ({ ...prev, [question._id]: true }))}
+                          disabled={placed[question._id]}
                         >
-                          {placed[bet.id] ? 'Bet Placed!' : 'Confirm'}
+                                                      {placed[question._id] ? 'Bet Placed!' : 'Confirm'}
                         </button>
                       </div>
-                      {confirming[bet.id] && (
+                      {confirming[question._id] && (
                         <div className="mt-2 p-4 rounded-xl glass border-2 border-gold">
                           <div className="mb-2 text-textsecondary font-display">Confirm your bet:</div>
                           <div className="mb-2 text-xl font-bold text-gold font-display">
-                            {selectedOption[bet.id]} @ x{multipliers.find((o) => o.label === selectedOption[bet.id])?.multiplier}
+                            {selectedOption[question._id]} @ x{multipliers.find((o) => o.label === selectedOption[question._id])?.multiplier}
                           </div>
                           <div className="mb-2 text-gold font-display">
-                            Amount: <span className="font-bold">{betAmounts[bet.id]}</span> tokens
+                            Amount: <span className="font-bold">{betAmounts[question._id]}</span> tokens
                           </div>
                           <div className="mb-2 text-gold font-display">
-                            Potential Win: <span className="font-bold">{betAmounts[bet.id] && multipliers.find((o) => o.label === selectedOption[bet.id]) ? (parseInt(betAmounts[bet.id], 10) * multipliers.find((o) => o.label === selectedOption[bet.id]).multiplier).toLocaleString() : 0}</span> tokens
+                            Potential Win: <span className="font-bold">{betAmounts[question._id] && multipliers.find((o) => o.label === selectedOption[question._id]) ? (parseInt(betAmounts[question._id], 10) * multipliers.find((o) => o.label === selectedOption[question._id]).multiplier).toLocaleString() : 0}</span> tokens
                           </div>
                           <button
                             className="mt-2 px-6 py-2 rounded-xl font-bold font-display text-lg border-2 border-[#FFFF33] bg-[#FFFF33] text-black shadow-lg hover:brightness-110 transition-all"
-                            onClick={() => handleConfirm(bet.id)}
+                            onClick={() => handleConfirm(question._id)}
                           >
                             Place Bet
                           </button>
