@@ -48,6 +48,8 @@ export const authAPI = {
 export const questionsAPI = {
   getAll: () => api.get('/questions'),
   create: (questionData) => api.post('/questions', questionData),
+  update: (id, data) => api.put(`/questions/${id}`, data),
+  delete: (id) => api.delete(`/questions/${id}`),
 };
 
 // Bets API calls

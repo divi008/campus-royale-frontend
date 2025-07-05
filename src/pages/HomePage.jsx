@@ -70,6 +70,8 @@ const HomePage = () => {
   const cardRefs = useRef({});
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingQuestion, setDeletingQuestion] = useState(null);
 
   // Fetch questions from backend
   useEffect(() => {
@@ -373,6 +375,25 @@ const HomePage = () => {
     }
   };
 
+  const handleDeleteClick = (question) => {
+    setDeletingQuestion(question);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingQuestion) return;
+    try {
+      await questionsAPI.delete(deletingQuestion._id);
+      setQuestions((qs) => qs.filter(q => q._id !== deletingQuestion._id));
+      setMessage('Question deleted');
+    } catch (err) {
+      setMessage('Failed to delete question');
+    } finally {
+      setDeleteModalOpen(false);
+      setDeletingQuestion(null);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-2 pt-12 pb-16">
       {message && (
@@ -395,22 +416,30 @@ const HomePage = () => {
               onClick={() => handleExpand(question._id)}
             >
               <Card ref={el => cardRefs.current[question._id] = el} className={`cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 ${isExpanded ? 'ring-2 ring-gold' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide">{question.title}</h3>
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words max-w-[60vw]">{question.title}</h3>
                   <span className="text-xs text-gold bg-[#facc1533] px-3 py-1 rounded-full font-bold shadow">{totalBets} bets</span>
                   {user && user.role === 'admin' && (
-                    <button
-                      onClick={e => { e.stopPropagation(); handleEditClick(question); }}
-                      className="ml-4 px-3 py-1 bg-gold text-black font-bold rounded shadow hover:bg-yellow-400 border-2 border-gold transition"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex gap-2 ml-2">
+                      <button
+                        onClick={e => { e.stopPropagation(); handleEditClick(question); }}
+                        className="px-3 py-1 bg-gold text-black font-bold rounded shadow hover:bg-yellow-400 border-2 border-gold transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDeleteClick(question); }}
+                        className="px-3 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 border-2 border-red-400 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </div>
                 <p className="text-textsecondary mb-3 text-base font-sans">{question.description}</p>
                 <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
                   {options.map((opt, i) => (
-                    <div key={opt.label} className="flex flex-col items-center min-w-[120px] max-w-[160px] w-full sm:w-auto">
+                    <div key={opt.label} className="flex flex-col items-center min-w-[120px] max-w-[160px] w-full sm:w-auto break-words">
                       <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
                       <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
                       <span className="text-textsecondary">x{multipliers[i].multiplier}</span>
@@ -429,7 +458,7 @@ const HomePage = () => {
                     {multipliers.map((opt, i) => (
                       <button
                         key={opt.label}
-                        className={`flex-1 min-w-[120px] max-w-[180px] px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide mb-2 ${selectedOption[question._id] === opt.label
+                        className={`flex-1 min-w-[120px] max-w-[180px] px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide mb-2 sm:mb-0 ${selectedOption[question._id] === opt.label
                           ? (i % 2 === 0
                             ? 'bg-[#39FF14] border-[#39FF14] text-black shadow-lg'
                             : 'bg-[#FFAC1C] border-[#FFAC1C] text-black shadow-lg')
@@ -443,8 +472,8 @@ const HomePage = () => {
                     ))}
                   </div>
                   {selectedOption[question._id] && (
-                    <div className="flex flex-col gap-3 mt-4 mb-8 pb-8 min-h-[180px] sm:min-h-[140px]">
-                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <div className="flex flex-col gap-3 mt-4 mb-8 pb-8 min-h-[180px] sm:min-h-[140px] w-full">
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full flex-wrap">
                         <span className="text-gold font-bold text-lg">Bet:</span>
                         <input
                           type="range"
@@ -452,7 +481,7 @@ const HomePage = () => {
                           max={tokens}
                           value={betAmounts[question._id] || 1}
                           onChange={e => handleAmountChange(question._id, e.target.value)}
-                          className="flex-1 h-2 bg-gradient-to-r from-gold/30 to-transparent rounded-lg appearance-none cursor-pointer outline-none transition-all duration-200"
+                          className="flex-1 h-2 bg-gradient-to-r from-gold/30 to-transparent rounded-lg appearance-none cursor-pointer outline-none transition-all duration-200 min-w-[120px] max-w-[200px]"
                           style={{ accentColor: '#FFD700' }}
                         />
                         <input
@@ -468,7 +497,7 @@ const HomePage = () => {
                           {betAmounts[question._id] || 1}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row items-center gap-4 w-full flex-wrap">
                         <span className="text-base text-gold font-display font-semibold">
                           Win: {betAmounts[question._id] && multipliers.find((o) => o.label === selectedOption[question._id]) ? (parseInt(betAmounts[question._id], 10) * multipliers.find((o) => o.label === selectedOption[question._id]).multiplier).toLocaleString() : 0} tokens
                         </span>
@@ -485,7 +514,7 @@ const HomePage = () => {
                           onClick={() => setConfirming((prev) => ({ ...prev, [question._id]: true }))}
                           disabled={placed[question._id]}
                         >
-                                                      {placed[question._id] ? 'Bet Placed!' : 'Confirm'}
+                          {placed[question._id] ? 'Bet Placed!' : 'Confirm'}
                         </button>
                       </div>
                       {confirming[question._id] && (
@@ -640,6 +669,20 @@ const HomePage = () => {
               </div>
             </div>
             <button onClick={handleEditSave} className="w-full py-2 bg-gold text-black font-extrabold rounded hover:bg-yellow-400 transition">Save Changes</button>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && deletingQuestion && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 p-2 overflow-y-auto">
+          <div className="relative z-[1000] w-full max-w-md bg-black/95 p-6 rounded-lg border-2 border-gold shadow-2xl max-h-[95vh] overflow-y-auto">
+            <button onClick={() => setDeleteModalOpen(false)} className="absolute top-2 right-2 text-gold text-2xl font-bold hover:text-yellow-400">✕</button>
+            <h2 className="text-xl font-extrabold text-gold mb-4">Delete Question</h2>
+            <div className="mb-4 text-gold">Are you sure you want to delete <span className="font-bold">{deletingQuestion.title}</span>?</div>
+            <div className="flex gap-4 justify-end">
+              <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 rounded bg-gray-700 text-gold border border-gold font-bold hover:bg-gray-800">Cancel</button>
+              <button onClick={handleDeleteConfirm} className="px-4 py-2 rounded bg-red-500 text-white border border-red-400 font-bold hover:bg-red-600">Delete</button>
+            </div>
           </div>
         </div>
       )}
