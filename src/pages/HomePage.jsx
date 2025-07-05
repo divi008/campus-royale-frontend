@@ -3,6 +3,7 @@ import { useToken } from "../context/TokenContext";
 import { questionsAPI } from "../services/api";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from 'react-router-dom';
 
 const DUMMY_BETS = [
   {
@@ -72,6 +73,7 @@ const HomePage = () => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingQuestion, setDeletingQuestion] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch questions from backend
   useEffect(() => {
@@ -405,149 +407,26 @@ const HomePage = () => {
       ) : questions.length === 0 ? (
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {questions.map((question) => {
-            const options = question.options;
-            const multipliers = calculateMultipliers(options);
-            const chances = calculateChances(options);
-            const totalBets = options.reduce((sum, o) => sum + o.votes, 0);
-            const isExpanded = expanded === question._id;
-            return (
-              <div key={question._id} className="mb-12">
-                <div
-                  className="transition-all duration-500"
-                  onClick={() => handleExpand(question._id)}
-                >
-                  <Card ref={el => cardRefs.current[question._id] = el} className={`cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 ${isExpanded ? 'ring-2 ring-gold' : ''}`}>
-                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                      <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words max-w-[60vw]">{question.title}</h3>
-                      <span className="text-xs text-gold bg-[#facc1533] px-3 py-1 rounded-full font-bold shadow">{totalBets} bets</span>
-                      {user && user.role === 'admin' && (
-                        <div className="flex gap-2 ml-2">
-                          <button
-                            onClick={e => { e.stopPropagation(); handleEditClick(question); }}
-                            className="px-3 py-1 bg-gold text-black font-bold rounded shadow hover:bg-yellow-400 border-2 border-gold transition"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={e => { e.stopPropagation(); handleDeleteClick(question); }}
-                            className="px-3 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 border-2 border-red-400 transition"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-textsecondary mb-3 text-base font-sans">{question.description}</p>
-                    <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
-                      {options.map((opt, i) => (
-                        <div key={opt.label} className="flex flex-col items-center min-w-[120px] max-w-[160px] w-full sm:w-auto break-words">
-                          <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
-                          <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
-                          <span className="text-textsecondary">x{multipliers[i].multiplier}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                </div>
-                {/* Expandable details */}
-                <div
-                  className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'max-h-[320px] mt-4' : 'max-h-0'} `}
-                >
-                  {isExpanded && (
-                    <Card className="bg-cardbg border-2 border-gold shadow-lg">
-                      <div className="flex flex-wrap gap-4 mb-4 mt-2 justify-center">
-                        {multipliers.map((opt, i) => (
-                          <button
-                            key={opt.label}
-                            className={`flex-1 min-w-[120px] max-w-[180px] px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide mb-2 sm:mb-0 ${selectedOption[question._id] === opt.label
-                              ? (i % 2 === 0
-                                ? 'bg-[#39FF14] border-[#39FF14] text-black shadow-lg'
-                                : 'bg-[#FFAC1C] border-[#FFAC1C] text-black shadow-lg')
-                              : 'bg-transparent border-cardbg text-[#00eaff] hover:bg-cardbg/60'}`}
-                            style={{ fontFamily: 'inherit', color: selectedOption[question._id] === opt.label ? undefined : '#00eaff' }}
-                            onClick={() => handleSelectOption(question._id, opt.label)}
-                          >
-                            {opt.label} <span className="ml-2 text-xs font-bold">x{opt.multiplier}</span>
-                            <span className="ml-2 text-xs text-textsecondary">{options[i].votes} bets</span>
-                          </button>
-                        ))}
-                      </div>
-                      {selectedOption[question._id] && (
-                        <div className="flex flex-col gap-3 mt-4 mb-8 pb-8 min-h-[180px] sm:min-h-[140px] w-full">
-                          <div className="flex flex-col sm:flex-row items-center gap-3 w-full flex-wrap">
-                            <span className="text-gold font-bold text-lg">Bet:</span>
-                            <input
-                              type="range"
-                              min="1"
-                              max={tokens}
-                              value={betAmounts[question._id] || 1}
-                              onChange={e => handleAmountChange(question._id, e.target.value)}
-                              className="flex-1 h-2 bg-gradient-to-r from-gold/30 to-transparent rounded-lg appearance-none cursor-pointer outline-none transition-all duration-200 min-w-[120px] max-w-[200px]"
-                              style={{ accentColor: '#FFD700' }}
-                            />
-                            <input
-                              type="number"
-                              min="1"
-                              max={tokens}
-                              value={betAmounts[question._id] || 1}
-                              onChange={e => handleAmountChange(question._id, e.target.value)}
-                              className="w-20 p-2 rounded bg-gray-900 border border-gold text-gold text-center font-bold"
-                            />
-                            <span className="flex items-center gap-1 text-gold font-bold text-lg">
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6 inline-block"><circle cx="12" cy="12" r="10" fill="#FFD700" /><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#222" fontWeight="bold">₹</text></svg>
-                              {betAmounts[question._id] || 1}
-                            </span>
-                          </div>
-                          <div className="flex flex-col sm:flex-row items-center gap-4 w-full flex-wrap">
-                            <span className="text-base text-gold font-display font-semibold">
-                              Win: {betAmounts[question._id] && multipliers.find((o) => o.label === selectedOption[question._id]) ? (parseInt(betAmounts[question._id], 10) * multipliers.find((o) => o.label === selectedOption[question._id]).multiplier).toLocaleString() : 0} tokens
-                            </span>
-                            <button
-                              className={`px-6 py-2 rounded-xl font-bold shadow-lg border-2 font-display text-lg tracking-wide transition-all ${placed[question._id]
-                                ? 'bg-gold border-gold text-velvetgreen animate-pulse'
-                                : confirming[question._id]
-                                  ? 'bg-[#00eaff] border-[#00eaff] text-black hover:brightness-110'
-                                  : selectedOption[question._id]
-                                    ? (multipliers.findIndex((o) => o.label === selectedOption[question._id]) % 2 === 0
-                                      ? 'bg-[#39FF14] border-[#39FF14] text-black hover:brightness-110'
-                                      : 'bg-[#FFAC1C] border-[#FFAC1C] text-black hover:brightness-110')
-                                    : 'bg-cardbg border-gold text-gold hover:brightness-110'}`}
-                              onClick={() => setConfirming((prev) => ({ ...prev, [question._id]: true }))}
-                              disabled={placed[question._id]}
-                            >
-                              {placed[question._id] ? 'Bet Placed!' : 'Confirm'}
-                            </button>
-                          </div>
-                          {confirming[question._id] && (
-                            <div className="mt-2 p-4 rounded-xl glass border-2 border-gold">
-                              <div className="mb-2 text-textsecondary font-display">Confirm your bet:</div>
-                              <div className="mb-2 text-xl font-bold text-gold font-display">
-                                {selectedOption[question._id]} @ x{multipliers.find((o) => o.label === selectedOption[question._id])?.multiplier}
-                              </div>
-                              <div className="mb-2 text-gold font-display">
-                                Amount: <span className="font-bold">{betAmounts[question._id]}</span> tokens
-                              </div>
-                              <div className="mb-2 text-gold font-display">
-                                Potential Win: <span className="font-bold">{betAmounts[question._id] && multipliers.find((o) => o.label === selectedOption[question._id]) ? (parseInt(betAmounts[question._id], 10) * multipliers.find((o) => o.label === selectedOption[question._id]).multiplier).toLocaleString() : 0}</span> tokens
-                              </div>
-                              <button
-                                className="mt-2 px-6 py-2 rounded-xl font-bold font-display text-lg border-2 border-[#FFFF33] bg-[#FFFF33] text-black shadow-lg hover:brightness-110 transition-all"
-                                onClick={() => handleConfirm(question._id)}
-                              >
-                                Place Bet
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Card>
-                  )}
-                </div>
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-2 md:px-6 py-8">
+          {questions.map((question) => (
+            <div
+              key={question._id}
+              className="cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-center aspect-square p-6"
+              onClick={() => navigate(`/bet/${question._id}`)}
+            >
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2">{question.title}</h3>
+              <p className="text-textsecondary mb-3 text-base font-sans text-center">{question.description}</p>
+              <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
+                {question.options.map((opt, i) => (
+                  <div key={opt.label} className="flex flex-col items-center min-w-[100px] max-w-[140px] w-full sm:w-auto break-words">
+                    <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
+                    <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
+                    <span className="text-textsecondary">x{opt.odds || 1.5}</span>
+                  </div>
+                ))}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
       {confetti.map(c => (

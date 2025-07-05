@@ -13,6 +13,7 @@ import AnimatedCasinoBackground from "./components/CasinoBackground";
 import AddQuestionPage from './pages/AddQuestionPage';
 import SuggestQuestionPage from './pages/SuggestQuestionPage';
 import AdminSuggestionsPage from './pages/AdminSuggestionsPage';
+import BetPage from './pages/BetPage';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -43,6 +44,7 @@ const App = () => {
             <Route path="/add-question" element={<ProtectedRoute><AddQuestionPage /></ProtectedRoute>} />
             <Route path="/suggest-question" element={<ProtectedRoute><SuggestQuestionPage /></ProtectedRoute>} />
             <Route path="/admin/suggestions" element={<ProtectedRoute><AdminSuggestionsPage /></ProtectedRoute>} />
+            <Route path="/bet/:id" element={<ProtectedRoute><BetPage /></ProtectedRoute>} />
           </Routes>
         </Router>
       </TokenProvider>
