@@ -94,25 +94,22 @@ const LoadingSpinner = ({ isVisible, message = "Loading..." }) => {
             exit={{ scale: 0.8, y: 20 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            {/* Lottie Animation */}
+            {/* Main Spinning Animation */}
             <div className="relative mb-4">
-              <div className="w-24 h-24 mx-auto">
-                <Lottie
-                  animationData={coinAnimation}
-                  loop={true}
-                  autoplay={true}
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </div>
-              {/* Fallback CSS animation if Lottie fails */}
-              <div className="absolute inset-0 w-24 h-24 mx-auto animate-spin opacity-0">
+              <div className="w-24 h-24 mx-auto animate-spin">
                 <div className="w-full h-full rounded-full bg-gradient-to-r from-gold via-yellow-400 to-gold border-4 border-gold shadow-lg">
                   <div className="w-full h-full rounded-full bg-gradient-to-r from-yellow-400 via-gold to-yellow-400 animate-pulse"></div>
                 </div>
               </div>
+              
               {/* Casino chip effect */}
               <div className="absolute inset-0 w-24 h-24 mx-auto animate-ping">
                 <div className="w-full h-full rounded-full border-2 border-gold opacity-20"></div>
+              </div>
+              
+              {/* Roulette wheel effect */}
+              <div className="absolute inset-0 w-24 h-24 mx-auto">
+                <div className="w-full h-full rounded-full border-4 border-transparent border-t-gold border-r-gold animate-spin" style={{ animationDuration: '1s' }}></div>
               </div>
             </div>
             

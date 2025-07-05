@@ -569,6 +569,19 @@ const HomePage = () => {
       ) : (
         <div className="w-full px-0 py-8 relative z-10">
           <div className="mb-6 space-y-4">
+            {/* Test Loading Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => {
+                  setLoadingAction(true);
+                  setTimeout(() => setLoadingAction(false), 3000);
+                }}
+                className="px-4 py-2 bg-purple-600 text-white font-bold rounded hover:bg-purple-700 transition"
+              >
+                🎰 Test Loading Spinner (3s)
+              </button>
+            </div>
+            
             {/* Search Bar */}
             <div className="relative">
               <input
