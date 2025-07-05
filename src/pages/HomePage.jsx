@@ -637,7 +637,7 @@ const HomePage = () => {
                 onClick={() => navigate('/my-bets')}
                 className="px-4 py-2 rounded-lg bg-gold text-black font-bold hover:bg-yellow-400 transition border-2 border-gold"
               >
-                🎯 My Bets ({bets.length})
+                🎯 My Bets
               </button>
 
               {/* Sort */}
