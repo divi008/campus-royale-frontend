@@ -545,6 +545,8 @@ const HomePage = () => {
                       className="w-full p-3 text-left text-gold hover:bg-gray-800 border-b border-gold/20 last:border-b-0"
                       onClick={() => {
                         setSearchQuery('');
+                        // Expand the question card
+                        handleExpand(question._id);
                         // Scroll to the question card
                         const element = document.getElementById(`question-${question._id}`);
                         if (element) {
