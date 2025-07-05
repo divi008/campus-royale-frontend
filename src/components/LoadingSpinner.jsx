@@ -94,22 +94,27 @@ const LoadingSpinner = ({ isVisible, message = "Loading..." }) => {
             exit={{ scale: 0.8, y: 20 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            {/* Main Spinning Animation */}
+            {/* Roulette Wheel Animation */}
             <div className="relative mb-4">
-              <div className="w-24 h-24 mx-auto animate-spin">
-                <div className="w-full h-full rounded-full bg-gradient-to-r from-gold via-yellow-400 to-gold border-4 border-gold shadow-lg">
-                  <div className="w-full h-full rounded-full bg-gradient-to-r from-yellow-400 via-gold to-yellow-400 animate-pulse"></div>
+              {/* Main wheel */}
+              <div className="w-32 h-32 mx-auto relative">
+                <div className="w-full h-full rounded-full bg-gradient-to-r from-red-600 via-black to-green-600 border-8 border-gold shadow-2xl animate-spin" style={{ animationDuration: '2s' }}>
+                  {/* Wheel segments */}
+                  <div className="absolute inset-2 rounded-full bg-gradient-to-r from-red-500 to-green-500 opacity-20"></div>
+                  <div className="absolute inset-4 rounded-full bg-black border-2 border-gold"></div>
+                  <div className="absolute inset-6 rounded-full bg-gradient-to-r from-red-400 to-green-400 opacity-30"></div>
                 </div>
+                
+                {/* Center hub */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gold rounded-full border-4 border-white shadow-lg"></div>
+                
+                {/* Spinning ball */}
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rounded-full shadow-lg animate-bounce"></div>
               </div>
               
-              {/* Casino chip effect */}
-              <div className="absolute inset-0 w-24 h-24 mx-auto animate-ping">
-                <div className="w-full h-full rounded-full border-2 border-gold opacity-20"></div>
-              </div>
-              
-              {/* Roulette wheel effect */}
-              <div className="absolute inset-0 w-24 h-24 mx-auto">
-                <div className="w-full h-full rounded-full border-4 border-transparent border-t-gold border-r-gold animate-spin" style={{ animationDuration: '1s' }}></div>
+              {/* Glowing effect */}
+              <div className="absolute inset-0 w-32 h-32 mx-auto animate-pulse">
+                <div className="w-full h-full rounded-full border-4 border-gold opacity-30"></div>
               </div>
             </div>
             
@@ -123,16 +128,18 @@ const LoadingSpinner = ({ isVisible, message = "Loading..." }) => {
               {message}
             </motion.div>
             
-            {/* Dots animation */}
+            {/* Casino chips animation */}
             <motion.div 
-              className="flex justify-center mt-2 space-x-1"
+              className="flex justify-center mt-4 space-x-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <div className="w-2 h-2 bg-gold rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-gold rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-gold rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 bg-yellow-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+              <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </motion.div>
           </motion.div>
         </motion.div>
