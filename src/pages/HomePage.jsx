@@ -59,7 +59,7 @@ const CYAN = '#00eaff';
 
 const HomePage = () => {
   const { deductTokens, tokens, addBet, creditTokens } = useToken();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [message, setMessage] = useState("");
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -408,6 +408,9 @@ const HomePage = () => {
     try {
       await api.post(`/questions/${resolveModal.question._id}/resolve`, { correctOption: resolveOption });
       setResolveMsg('Question resolved and winnings credited!');
+      // Fetch updated user profile
+      const profile = await api.get('/profile');
+      setUser(profile.data);
       setTimeout(() => setResolveModal({ open: false, question: null }), 1500);
     } catch (err) {
       setResolveMsg(err.response?.data?.message || 'Failed to resolve question');
