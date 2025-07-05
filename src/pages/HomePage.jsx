@@ -420,9 +420,26 @@ const HomePage = () => {
             {questions.map((question) => (
               <div
                 key={question._id}
-                className="relative z-20 bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start min-h-[320px] p-6 cursor-pointer select-none w-full mx-0"
+                className="relative z-20 bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start p-6 cursor-pointer select-none w-full mx-0 h-auto"
                 onClick={() => navigate(`/bet/${question._id}`)}
               >
+                {/* Admin Edit/Delete Buttons */}
+                {user && user.role === 'admin' && (
+                  <div className="absolute top-4 right-4 flex gap-2 z-30">
+                    <button
+                      onClick={e => { e.stopPropagation(); handleEditClick(question); }}
+                      className="px-3 py-1 bg-gold text-black font-bold rounded shadow hover:bg-yellow-400 border-2 border-gold transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleDeleteClick(question); }}
+                      className="px-3 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 border-2 border-red-400 transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2 w-full">{question.title}</h3>
                 <p className="text-textsecondary mb-3 text-base font-sans text-center w-full">{question.description}</p>
                 <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center w-full">
