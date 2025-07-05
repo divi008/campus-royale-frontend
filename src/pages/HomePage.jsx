@@ -713,7 +713,7 @@ const HomePage = () => {
                   </div>
                 )}
                 {/* Animated status badge */}
-                <div className="absolute top-4 left-4 z-30">
+                <div className="absolute bottom-4 left-4 z-30">
                   {question.isResolved ? (
                     <span className="inline-block px-3 py-1 bg-green-700 text-gold font-bold rounded-full text-xs animate-bounce">✔️ Resolved</span>
                   ) : (
