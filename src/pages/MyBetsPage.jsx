@@ -1,41 +1,65 @@
-import React from "react";
-import { useToken } from "../context/TokenContext";
-import Card from "../components/ui/Card";
+import React, { useEffect, useState } from 'react';
+import { betsAPI } from '../services/api';
 
 const MyBetsPage = () => {
-  const { bets } = useToken();
+  const [bets, setBets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBets = async () => {
+      try {
+        const res = await betsAPI.myBets();
+        setBets(res.data);
+      } catch (err) {
+        setBets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBets();
+  }, []);
 
   return (
-    <div className="max-w-2xl mx-auto px-2 py-8">
-      <h2 className="text-2xl font-bold neon-purple mb-6">My Bets</h2>
-      {bets.length === 0 ? (
-        <div className="text-[#bdb4e6] text-center">No bets placed yet.</div>
-      ) : (
-        <div className="space-y-4">
-          {bets.map((bet, idx) => (
-            <Card key={idx} className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="font-semibold neon-purple mb-1">{bet.question}</div>
-                <div className="text-sm text-[#bdb4e6] mb-1">
-                  <span className={
-                    bet.option.toLowerCase() === "yes"
-                      ? "text-green-400 font-bold"
-                      : bet.option.toLowerCase() === "no"
-                      ? "text-red-400 font-bold"
-                      : "neon-purple font-bold"
-                  }>
-                    {bet.option}
-                  </span>{" "}
-                  | Bet: <span className="font-semibold text-blue-200">{bet.amount}</span> tokens
-                  {" "}| Multiplier: <span className="font-semibold neon-blue">x{bet.multiplier}</span>
-                  {" "}| Win: <span className="font-semibold neon-blue">{bet.win}</span> tokens
-                </div>
-                <div className="text-xs text-[#bdb4e6]">{new Date(bet.timestamp).toLocaleString()}</div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+      <div className="max-w-3xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20">
+        <h1 className="text-3xl font-bold text-gold mb-8 text-center">My Bet History</h1>
+        {loading ? (
+          <div className="text-center text-gold text-xl">Loading...</div>
+        ) : bets.length === 0 ? (
+          <div className="text-center text-white text-lg">No bets found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-gold border-b border-gold">
+                  <th className="py-2 px-3">Question</th>
+                  <th className="py-2 px-3">Option</th>
+                  <th className="py-2 px-3">Amount</th>
+                  <th className="py-2 px-3">Odds</th>
+                  <th className="py-2 px-3">Status</th>
+                  <th className="py-2 px-3">Winnings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bets.map(bet => (
+                  <tr key={bet._id} className="border-b border-white/10 hover:bg-white/5">
+                    <td className="py-2 px-3">{bet.questionId}</td>
+                    <td className="py-2 px-3">{bet.option}</td>
+                    <td className="py-2 px-3">{bet.amount}</td>
+                    <td className="py-2 px-3">x{bet.odds}</td>
+                    <td className="py-2 px-3">
+                      {bet.resolved ? (
+                        bet.won ? <span className="text-green-400 font-bold">Won</span> : <span className="text-red-400 font-bold">Lost</span>
+                      ) : <span className="text-yellow-400 font-bold">Pending</span>}
+                    </td>
+                    <td className="py-2 px-3">{bet.winnings}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

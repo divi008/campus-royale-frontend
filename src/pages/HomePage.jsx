@@ -417,6 +417,17 @@ const HomePage = () => {
     }
   };
 
+  const handleUnresolve = async () => {
+    setResolveMsg('');
+    try {
+      await api.post(`/questions/${resolveModal.question._id}/unresolve`);
+      setResolveMsg('Question unresolved and bets reset!');
+      setTimeout(() => setResolveModal({ open: false, question: null }), 1500);
+    } catch (err) {
+      setResolveMsg(err.response?.data?.message || 'Failed to unresolve question');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-2 pt-12 pb-16">
       {message && (
@@ -463,6 +474,12 @@ const HomePage = () => {
                       className="px-3 py-1 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 border-2 border-blue-400 transition"
                     >
                       Resolve
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); setResolveModal({ open: true, question }); setResolveOption(''); setResolveMsg(''); handleUnresolve(); }}
+                      className="px-3 py-1 bg-gray-500 text-white font-bold rounded shadow hover:bg-gray-600 border-2 border-gray-400 transition"
+                    >
+                      Unresolve
                     </button>
                   </div>
                 )}
@@ -675,6 +692,12 @@ const HomePage = () => {
                 className="px-4 py-2 bg-gold text-black font-bold rounded-lg"
               >
                 Resolve
+              </button>
+              <button
+                onClick={handleUnresolve}
+                className="px-4 py-2 bg-gray-500 text-white font-bold rounded-lg"
+              >
+                Unresolve
               </button>
             </div>
           </div>

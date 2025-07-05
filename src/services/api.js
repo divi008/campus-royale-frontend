@@ -63,6 +63,7 @@ export const suggestionsAPI = {
 // Bets API calls
 export const betsAPI = {
   placeBet: (betData) => api.post('/place-bet', betData),
+  myBets: () => api.get('/my-bets'),
 };
 
 // Leaderboard API calls
