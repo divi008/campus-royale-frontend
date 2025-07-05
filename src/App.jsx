@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import HomePage from "./pages/HomePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import MyBetsPage from "./pages/MyBetsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AnimatedCasinoBackground from "./components/CasinoBackground";
@@ -43,6 +44,7 @@ const App = () => {
             <Route path="/suggest-question" element={<ProtectedRoute><SuggestQuestionPage /></ProtectedRoute>} />
             <Route path="/admin/suggestions" element={<ProtectedRoute><AdminSuggestionsPage /></ProtectedRoute>} />
             <Route path="/bet/:id" element={<ProtectedRoute><BetPage /></ProtectedRoute>} />
+            <Route path="/my-bets" element={<ProtectedRoute><MyBetsPage /></ProtectedRoute>} />
           </Routes>
         </Router>
       </TokenProvider>
