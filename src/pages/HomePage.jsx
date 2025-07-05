@@ -63,7 +63,7 @@ const TAGS = [
 ];
 
 const HomePage = () => {
-  const { deductTokens, tokens, addBet, creditTokens } = useToken();
+  const { deductTokens, tokens, addBet, creditTokens, bets } = useToken();
   const { user, setUser } = useAuth();
   const [message, setMessage] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -140,8 +140,8 @@ const HomePage = () => {
         return new Date(a.createdAt) - new Date(b.createdAt);
       case 'mybets':
         // Sort by whether user has bets on the question
-        const aHasBets = userBets.some(bet => bet.questionId === a._id);
-        const bHasBets = userBets.some(bet => bet.questionId === b._id);
+        const aHasBets = bets.some(bet => bet.questionId === a._id);
+        const bHasBets = bets.some(bet => bet.questionId === b._id);
         return bHasBets - aHasBets;
       default: // recent
         return new Date(b.createdAt) - new Date(a.createdAt);
@@ -547,13 +547,6 @@ const HomePage = () => {
                         setSearchQuery('');
                         // Expand the question card
                         handleExpand(question._id);
-                        // Scroll to the question card
-                        const element = document.getElementById(`question-${question._id}`);
-                        if (element) {
-                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          element.classList.add('animate-pulse');
-                          setTimeout(() => element.classList.remove('animate-pulse'), 2000);
-                        }
                       }}
                     >
                       <div className="font-bold">{question.title}</div>
