@@ -466,6 +466,12 @@ const HomePage = () => {
                     </button>
                   </div>
                 )}
+                {question.isResolved && (
+                  <div className="absolute top-4 left-4 z-30">
+                    <span className="inline-block px-3 py-1 bg-green-700 text-gold font-bold rounded-full text-xs">Result Declared</span>
+                    <div className="text-xs text-gold font-bold mt-1">Answer: {question.correctOption}</div>
+                  </div>
+                )}
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2 w-full">{question.title}</h3>
                 <p className="text-textsecondary mb-3 text-base font-sans text-center w-full">{question.description}</p>
                 <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center w-full">

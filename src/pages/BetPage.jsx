@@ -23,6 +23,22 @@ const BetPage = () => {
 
   if (!question) return <div className="min-h-screen flex items-center justify-center text-gold text-2xl">Loading...</div>;
 
+  if (question.isResolved) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-2xl bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20 text-center">
+          <h1 className="text-3xl font-bold text-gold mb-2">{question.title}</h1>
+          <p className="text-white mb-6">{question.description}</p>
+          <div className="mb-6">
+            <span className="inline-block px-4 py-2 bg-green-700 text-gold font-bold rounded-full text-lg mb-2">Result Declared</span>
+            <div className="text-xl text-gold font-bold mt-2">Correct Answer: {question.correctOption}</div>
+          </div>
+          <button onClick={() => navigate(-1)} className="mt-4 px-6 py-2 bg-gold text-black font-bold rounded-lg">Back</button>
+        </div>
+      </div>
+    );
+  }
+
   const multipliers = question.options.map(opt => opt.odds || 1.5);
 
   const handlePlaceBet = async () => {
