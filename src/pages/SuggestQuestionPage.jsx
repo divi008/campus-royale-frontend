@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { suggestionsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const TAGS = [
+  'Placement', 'Sports', 'Event', 'Person', '#other'
+];
+
 const SuggestQuestionPage = () => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
@@ -11,6 +15,8 @@ const SuggestQuestionPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [customTag, setCustomTag] = useState('');
 
   const handleInputChange = (e) => {
     setFormData({
@@ -83,7 +89,8 @@ const SuggestQuestionPage = () => {
       const response = await suggestionsAPI.submit({
         questionText: formData.questionText.trim(),
         options: validOptions,
-        multipliers: formData.multipliers.slice(0, validOptions.length)
+        multipliers: formData.multipliers.slice(0, validOptions.length),
+        tags: selectedTags
       });
 
       setMessage({ type: 'success', text: response.data.message });
@@ -92,12 +99,25 @@ const SuggestQuestionPage = () => {
         options: ['', ''],
         multipliers: [1.5, 1.5]
       });
+      setSelectedTags([]);
+      setCustomTag('');
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to submit suggestion';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
     }
+  };
+
+  const addCustomTag = () => {
+    if (customTag.trim() && !selectedTags.includes(customTag.trim())) {
+      setSelectedTags(tags => [...tags, customTag.trim()]);
+      setCustomTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setSelectedTags(tags => tags.filter(tag => tag !== tagToRemove));
   };
 
   return (
@@ -185,6 +205,61 @@ const SuggestQuestionPage = () => {
               >
                 + Add Option
               </button>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-gold font-semibold mb-2">
+                Tags <span className="text-xs text-gray-400">(Select all that apply)</span>
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {TAGS.map(tag => (
+                  <button
+                    type="button"
+                    key={tag}
+                    className={`px-3 py-1 rounded-full font-bold border-2 transition-all text-xs ${selectedTags.includes(tag) ? 'bg-[#00eaff] border-[#00eaff] text-black shadow' : 'bg-cardbg border-[#00eaff] text-[#00eaff] hover:bg-[#00eaff22]'}`}
+                    onClick={() => setSelectedTags(tags => tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag])}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  placeholder="Add custom tag (e.g., CSE2024, Branch2025)"
+                  className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold text-sm"
+                  value={customTag}
+                  onChange={e => setCustomTag(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
+                />
+                <button
+                  type="button"
+                  onClick={addCustomTag}
+                  className="px-4 py-2 bg-[#00eaff] text-black font-bold rounded hover:bg-[#00eaffcc] transition text-sm"
+                >
+                  Add
+                </button>
+              </div>
+              {selectedTags.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {selectedTags.map(tag => (
+                    <span 
+                      key={tag} 
+                      className="px-2 py-1 rounded-full bg-[#00eaff] text-black font-bold text-xs shadow flex items-center gap-1"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="text-black hover:text-red-600 font-bold text-sm"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}

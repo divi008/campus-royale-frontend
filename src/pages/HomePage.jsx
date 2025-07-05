@@ -58,6 +58,10 @@ const FLUO_GREEN = '#39FF14';
 const FLUO_ORANGE = '#FFAC1C';
 const CYAN = '#00eaff';
 
+const TAGS = [
+  'Placement', 'Sports', 'Event', 'Person', '#other'
+];
+
 const HomePage = () => {
   const { deductTokens, tokens, addBet, creditTokens } = useToken();
   const { user, setUser } = useAuth();
@@ -73,6 +77,7 @@ const HomePage = () => {
   const cardRefs = useRef({});
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [customEditTag, setCustomEditTag] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingQuestion, setDeletingQuestion] = useState(null);
   const navigate = useNavigate();
@@ -82,6 +87,8 @@ const HomePage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
   const [loadingAction, setLoadingAction] = useState(false);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch questions from backend
   useEffect(() => {
@@ -100,27 +107,59 @@ const HomePage = () => {
     fetchQuestions();
   }, []);
 
-  // Filtering logic
-  let filteredQuestions = questions;
-  if (filterStatus === 'live') filteredQuestions = filteredQuestions.filter(q => !q.isResolved);
-  if (filterStatus === 'resolved') filteredQuestions = filteredQuestions.filter(q => q.isResolved);
+  // Comprehensive filtering and sorting logic:
+  const filteredQuestions = questions.filter(question => {
+    // Status filter
+    if (filterStatus === 'live' && question.isResolved) return false;
+    if (filterStatus === 'resolved' && !question.isResolved) return false;
+    
+    // Tag filter
+    if (selectedTags.length > 0) {
+      const questionTags = question.tags || [];
+      if (!selectedTags.some(tag => questionTags.includes(tag))) return false;
+    }
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = question.title.toLowerCase().includes(query);
+      const matchesDescription = question.description?.toLowerCase().includes(query);
+      const matchesTags = (question.tags || []).some(tag => tag.toLowerCase().includes(query));
+      if (!matchesTitle && !matchesDescription && !matchesTags) return false;
+    }
+    
+    return true;
+  });
 
-  // Sorting logic
   const sortedQuestions = [...filteredQuestions].sort((a, b) => {
-    if (sortBy === 'recent') {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    } else if (sortBy === 'ending') {
-      return new Date(a.deadline || 0) - new Date(b.deadline || 0);
-    } else if (sortBy === 'mybets') {
-      // Optionally, sort by questions the user has bet on (requires user bet data)
-      return 0;
-    } else {
-      // Most Popular: sort by total tokens bet
-      const aTotal = a.options.reduce((sum, o) => sum + (o.votes || 0), 0);
-      const bTotal = b.options.reduce((sum, o) => sum + (o.votes || 0), 0);
-      return bTotal - aTotal;
+    switch (sortBy) {
+      case 'popular':
+        return (b.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0) - 
+               (a.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0);
+      case 'ending':
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      case 'mybets':
+        // Sort by whether user has bets on the question
+        const aHasBets = userBets.some(bet => bet.questionId === a._id);
+        const bHasBets = userBets.some(bet => bet.questionId === b._id);
+        return bHasBets - aHasBets;
+      default: // recent
+        return new Date(b.createdAt) - new Date(a.createdAt);
     }
   });
+
+  // Get all unique tags from questions
+  const allTags = [...new Set(questions.flatMap(q => q.tags || []))].sort();
+
+  // Search suggestions
+  const searchSuggestions = questions
+    .filter(q => {
+      const query = searchQuery.toLowerCase();
+      return q.title.toLowerCase().includes(query) || 
+             q.description?.toLowerCase().includes(query) ||
+             (q.tags || []).some(tag => tag.toLowerCase().includes(query));
+    })
+    .slice(0, 5);
 
   const handleExpand = (betId) => {
     setExpanded(expanded === betId ? null : betId);
@@ -368,6 +407,7 @@ const HomePage = () => {
 
   const handleEditClick = (question) => {
     setEditingQuestion({ ...question, options: question.options.map(opt => ({ ...opt })) });
+    setCustomEditTag('');
     setEditModalOpen(true);
   };
 
@@ -392,12 +432,30 @@ const HomePage = () => {
     }));
   };
 
+  const addCustomEditTag = () => {
+    if (customEditTag.trim() && !editingQuestion.tags?.includes(customEditTag.trim())) {
+      setEditingQuestion(q => ({
+        ...q,
+        tags: [...(q.tags || []), customEditTag.trim()]
+      }));
+      setCustomEditTag('');
+    }
+  };
+
+  const removeEditTag = (tagToRemove) => {
+    setEditingQuestion(q => ({
+      ...q,
+      tags: (q.tags || []).filter(tag => tag !== tagToRemove)
+    }));
+  };
+
   const handleEditSave = async () => {
     try {
       await questionsAPI.update(editingQuestion._id, {
         title: editingQuestion.title,
         description: editingQuestion.description,
-        options: editingQuestion.options.map(opt => ({ label: opt.label, odds: Number(opt.odds) }))
+        options: editingQuestion.options.map(opt => ({ label: opt.label, odds: Number(opt.odds) })),
+        tags: editingQuestion.tags || []
       });
       setQuestions((qs) => qs.map(q => q._id === editingQuestion._id ? editingQuestion : q));
       setEditModalOpen(false);
@@ -465,30 +523,130 @@ const HomePage = () => {
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
         <div className="w-full px-0 py-8 relative z-10">
-          {/* Filter/Sort Dropdown Placeholder */}
-          <div className="flex flex-wrap gap-4 justify-between mb-6 px-4 items-center">
-            <div className="flex gap-2">
+          <div className="mb-6 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search questions, descriptions, or tags..."
+                className="w-full p-3 pr-10 rounded-lg bg-gray-900 border-2 border-gold text-gold placeholder-gray-400 focus:border-[#00eaff] focus:outline-none"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gold">
+                🔍
+              </div>
+              {/* Search Suggestions */}
+              {searchQuery.trim() && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-gray-900 border-2 border-gold rounded-lg mt-1 z-50 max-h-60 overflow-y-auto">
+                  {searchSuggestions.map(question => (
+                    <button
+                      key={question._id}
+                      className="w-full p-3 text-left text-gold hover:bg-gray-800 border-b border-gold/20 last:border-b-0"
+                      onClick={() => {
+                        setSearchQuery('');
+                        // Scroll to the question card
+                        const element = document.getElementById(`question-${question._id}`);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          element.classList.add('animate-pulse');
+                          setTimeout(() => element.classList.remove('animate-pulse'), 2000);
+                        }
+                      }}
+                    >
+                      <div className="font-bold">{question.title}</div>
+                      {question.description && (
+                        <div className="text-sm text-gray-400 truncate">{question.description}</div>
+                      )}
+                      {question.tags && question.tags.length > 0 && (
+                        <div className="flex gap-1 mt-1">
+                          {question.tags.slice(0, 2).map(tag => (
+                            <span key={tag} className="px-2 py-1 rounded-full bg-[#00eaff] text-black text-xs font-bold">
+                              {tag}
+                            </span>
+                          ))}
+                          {question.tags.length > 2 && (
+                            <span className="px-2 py-1 rounded-full bg-gray-700 text-gold text-xs">
+                              +{question.tags.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Filters and Sort */}
+            <div className="flex flex-wrap gap-4 items-center">
+              {/* Status Filter */}
               <select
-                className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none"
                 value={filterStatus}
                 onChange={e => setFilterStatus(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-gray-900 border-2 border-gold text-gold focus:border-[#00eaff] focus:outline-none"
               >
-                <option value="all">All</option>
+                <option value="all">All Questions</option>
                 <option value="live">⏳ Live</option>
                 <option value="resolved">✔️ Resolved</option>
               </select>
-              {/* Add category filter here if you have categories */}
+
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-gray-900 border-2 border-gold text-gold focus:border-[#00eaff] focus:outline-none"
+              >
+                <option value="recent">🕒 Recently Added</option>
+                <option value="popular">🔥 Most Popular</option>
+                <option value="ending">⏰ Ending Soon</option>
+                <option value="mybets">🎯 My Bets</option>
+              </select>
+
+              {/* Tag Filter */}
+              <div className="relative">
+                <select
+                  value=""
+                  onChange={e => {
+                    if (e.target.value && !selectedTags.includes(e.target.value)) {
+                      setSelectedTags([...selectedTags, e.target.value]);
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-gray-900 border-2 border-gold text-gold focus:border-[#00eaff] focus:outline-none"
+                >
+                  <option value="">🏷️ Filter by Tag</option>
+                  {allTags.map(tag => (
+                    <option key={tag} value={tag}>{tag}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <select
-              className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-            >
-              <option value="popular">Sort by Most Popular</option>
-              <option value="recent">Recently Added</option>
-              <option value="ending">Ending Soon</option>
-              <option value="mybets">My Bets</option>
-            </select>
+
+            {/* Selected Tag Filters */}
+            {selectedTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.map(tag => (
+                  <span 
+                    key={tag} 
+                    className="px-3 py-1 rounded-full bg-[#00eaff] text-black font-bold text-sm shadow flex items-center gap-2"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => setSelectedTags(tags => tags.filter(t => t !== tag))}
+                      className="text-black hover:text-red-600 font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <button
+                  onClick={() => setSelectedTags([])}
+                  className="px-3 py-1 rounded-full bg-gray-700 text-gold font-bold text-sm hover:bg-gray-600"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-6 w-full relative z-10">
             {loading ? (
@@ -552,6 +710,19 @@ const HomePage = () => {
                     </div>
                   ))}
                 </div>
+                {/* Tags */}
+                {question.tags && question.tags.length > 0 && (
+                  <div className="flex gap-2 flex-wrap mt-4">
+                    {question.tags.map(tag => (
+                      <span 
+                        key={tag} 
+                        className="px-2 py-1 rounded-full bg-[#00eaff] text-black font-bold text-xs shadow animate-pulse"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -653,7 +824,7 @@ const HomePage = () => {
       {editModalOpen && editingQuestion && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 p-2 overflow-y-auto">
           <div className="relative z-[1000] w-full max-w-xl bg-black/95 p-4 sm:p-8 rounded-lg border-2 border-gold shadow-2xl max-h-[95vh] overflow-y-auto">
-            <button onClick={() => setEditModalOpen(false)} className="absolute top-2 right-2 text-gold text-2xl font-bold hover:text-yellow-400">✕</button>
+            <button onClick={() => { setEditModalOpen(false); setCustomEditTag(''); }} className="absolute top-2 right-2 text-gold text-2xl font-bold hover:text-yellow-400">✕</button>
             <h2 className="text-2xl font-extrabold text-gold mb-4">Edit Question</h2>
             <div className="mb-4">
               <label className="block text-gold font-semibold mb-2">Title</label>
@@ -694,6 +865,67 @@ const HomePage = () => {
                   <span className="text-xl font-bold">+</span> <span>Add Option</span>
                 </button>
               </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gold font-semibold mb-2">
+                Tags <span className="text-xs text-gray-400">(Select all that apply)</span>
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {TAGS.map(tag => (
+                  <button
+                    type="button"
+                    key={tag}
+                    className={`px-3 py-1 rounded-full font-bold border-2 transition-all text-xs ${editingQuestion.tags?.includes(tag) ? 'bg-[#00eaff] border-[#00eaff] text-black shadow' : 'bg-cardbg border-[#00eaff] text-[#00eaff] hover:bg-[#00eaff22]'}`}
+                    onClick={() => setEditingQuestion(q => ({
+                      ...q,
+                      tags: q.tags?.includes(tag)
+                        ? q.tags.filter(t => t !== tag)
+                        : [...(q.tags || []), tag]
+                    }))}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+              {/* Custom Tag Input */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  placeholder="Add custom tag (e.g., CSE2024, Branch2025)"
+                  className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold text-sm"
+                  value={customEditTag}
+                  onChange={e => setCustomEditTag(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addCustomEditTag())}
+                />
+                <button
+                  type="button"
+                  onClick={addCustomEditTag}
+                  className="px-4 py-2 bg-[#00eaff] text-black font-bold rounded hover:bg-[#00eaffcc] transition text-sm"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Selected Tags Display */}
+              {(editingQuestion.tags || []).length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {(editingQuestion.tags || []).map(tag => (
+                    <span 
+                      key={tag} 
+                      className="px-2 py-1 rounded-full bg-[#00eaff] text-black font-bold text-xs shadow flex items-center gap-1"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeEditTag(tag)}
+                        className="text-black hover:text-red-600 font-bold text-sm"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <button onClick={handleEditSave} className="w-full py-2 bg-gold text-black font-extrabold rounded hover:bg-yellow-400 transition">Save Changes</button>
           </div>
