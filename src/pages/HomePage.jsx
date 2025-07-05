@@ -112,11 +112,6 @@ const HomePage = () => {
     // Status filter
     if (filterStatus === 'live' && question.isResolved) return false;
     if (filterStatus === 'resolved' && !question.isResolved) return false;
-    if (filterStatus === 'mybets') {
-      // Only show questions where user has placed bets
-      const userHasBets = bets.some(bet => bet.questionId === question._id);
-      if (!userHasBets) return false;
-    }
     
     // Tag filter
     if (selectedTags.length > 0) {
@@ -615,7 +610,6 @@ const HomePage = () => {
                 <option value="all">All Questions</option>
                 <option value="live">⏳ Live</option>
                 <option value="resolved">✔️ Resolved</option>
-                <option value="mybets">🎯 My Bets</option>
               </select>
 
               {/* Sort */}
@@ -765,6 +759,8 @@ const HomePage = () => {
               fontSize: c.size,
               animationDelay: `${c.delay}s`,
               '--dy': `${c.dy}px`,
+              zIndex: 9999,
+              position: 'fixed'
             }}
           >{c.emoji}</div>
         ) : c.snow && c.star ? (
@@ -778,6 +774,8 @@ const HomePage = () => {
               height: c.size,
               animationDelay: `${c.delay}s`,
               '--dy': `${c.dy}px`,
+              zIndex: 9999,
+              position: 'fixed'
             }}
           >
             <svg width={c.size} height={c.size} viewBox="0 0 40 40"><polygon points="20,2 25,15 39,15 28,24 32,38 20,30 8,38 12,24 1,15 15,15" fill="#fff" stroke="#FFD700" strokeWidth="2"/></svg>
@@ -796,6 +794,8 @@ const HomePage = () => {
               boxShadow: `0 0 16px 2px ${c.color}99` ,
               animationDelay: `${c.delay}s`,
               '--dy': `${c.dy}px`,
+              zIndex: 9999,
+              position: 'fixed'
             }}
           />
         ) : c.emojiBurst ? (
@@ -809,6 +809,8 @@ const HomePage = () => {
               animationDelay: `${c.delay}s`,
               '--dx': `${c.dx}px`,
               '--dy': `${c.dy}px`,
+              zIndex: 9999,
+              position: 'fixed'
             }}
           >{c.emoji}</div>
         ) : c.star ? (
@@ -823,6 +825,8 @@ const HomePage = () => {
               animationDelay: `${c.delay}s`,
               '--dx': `${c.dx}px`,
               '--dy': `${c.dy}px`,
+              zIndex: 9999,
+              position: 'fixed'
             }}
           >
             <svg width={c.size} height={c.size} viewBox="0 0 40 40"><polygon points="20,2 25,15 39,15 28,24 32,38 20,30 8,38 12,24 1,15 15,15" fill="#fff" stroke="#FFD700" strokeWidth="2"/></svg>
@@ -842,6 +846,8 @@ const HomePage = () => {
               animationDelay: `${c.delay}s`,
               '--dx': `${c.dx}px`,
               '--dy': `${c.dy}px`,
+              zIndex: 9999,
+              position: 'fixed'
             }}
           />
         )
