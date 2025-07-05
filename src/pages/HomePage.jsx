@@ -407,25 +407,25 @@ const HomePage = () => {
       ) : questions.length === 0 ? (
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
-        <div className="w-full px-4 py-8">
+        <div className="w-full px-0 py-8">
           {/* Filter/Sort Dropdown Placeholder */}
-          <div className="flex justify-end mb-6">
+          <div className="flex justify-end mb-6 px-4">
             <select className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none">
               <option>Sort by Most Popular</option>
               <option>Recently Added</option>
               <option>Ending Soon</option>
             </select>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 w-full">
             {questions.map((question) => (
               <div
                 key={question._id}
-                className="bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start min-h-[320px] p-6 cursor-pointer select-none"
+                className="bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start min-h-[320px] p-6 cursor-pointer select-none w-full mx-0"
                 onClick={() => navigate(`/bet/${question._id}`)}
               >
-                <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2">{question.title}</h3>
-                <p className="text-textsecondary mb-3 text-base font-sans text-center">{question.description}</p>
-                <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
+                <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2 w-full">{question.title}</h3>
+                <p className="text-textsecondary mb-3 text-base font-sans text-center w-full">{question.description}</p>
+                <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center w-full">
                   {question.options.map((opt, i) => (
                     <div key={opt.label} className="flex flex-col items-center min-w-[100px] max-w-[140px] w-full sm:w-auto break-words">
                       <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
