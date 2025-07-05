@@ -40,7 +40,7 @@ const AddQuestionPage = () => {
     }
   };
   return (
-    <div className="max-w-xl mx-auto mt-10 bg-black/80 p-8 rounded-lg border-2 border-gold shadow-lg">
+    <div className="relative z-50 max-w-xl mx-auto mt-10 bg-black/80 p-8 rounded-lg border-2 border-gold shadow-lg">
       <h2 className="text-3xl font-extrabold text-gold mb-6">Add Betting Question</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -53,16 +53,20 @@ const AddQuestionPage = () => {
         </div>
         <div className="mb-4">
           <label className="block text-gold font-semibold mb-2">Options</label>
-          {options.map((opt, idx) => (
-            <div key={idx} className="flex gap-2 mb-2 items-center">
-              <input type="text" placeholder={`Option ${idx + 1} label`} className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.label} onChange={e => handleOptionChange(idx, 'label', e.target.value)} required />
-              <input type="number" min="1" step="0.01" placeholder="Odds" className="w-24 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.odds} onChange={e => handleOptionChange(idx, 'odds', e.target.value)} required />
-              {options.length > 2 && (
-                <button type="button" onClick={() => removeOption(idx)} className="text-red-400 font-bold px-2">✕</button>
-              )}
-            </div>
-          ))}
-          <button type="button" onClick={addOption} className="mt-2 px-4 py-1 bg-gold text-black rounded font-bold hover:bg-yellow-400">+ Add Option</button>
+          <div className="space-y-2">
+            {options.map((opt, idx) => (
+              <div key={idx} className="flex gap-2 items-center bg-gray-800/80 p-2 rounded-lg border border-gold/40">
+                <input type="text" placeholder={`Option ${idx + 1} name`} className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.label} onChange={e => handleOptionChange(idx, 'label', e.target.value)} required />
+                <input type="number" min="1" step="0.01" placeholder="Odds" className="w-24 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.odds} onChange={e => handleOptionChange(idx, 'odds', e.target.value)} required />
+                {options.length > 2 && (
+                  <button type="button" onClick={() => removeOption(idx)} className="text-red-400 font-bold px-2 text-xl hover:text-red-600" title="Remove option">✕</button>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={addOption} className="flex items-center gap-2 mt-2 px-4 py-2 bg-gold text-black rounded font-bold hover:bg-yellow-400 transition shadow-gold/50 border-2 border-gold">
+              <span className="text-xl font-bold">+</span> <span>Add Option</span>
+            </button>
+          </div>
         </div>
         {error && <div className="text-red-500 mb-2 font-bold">{error}</div>}
         {success && <div className="text-green-400 mb-2 font-bold">{success}</div>}
