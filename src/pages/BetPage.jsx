@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { questionsAPI } from '../services/api';
+import { questionsAPI, betsAPI } from '../services/api';
 import { useToken } from '../context/TokenContext';
 
 const BetPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { tokens } = useToken();
+  const { tokens, deductTokens, creditTokens } = useToken();
   const [question, setQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [amount, setAmount] = useState(1);
@@ -24,6 +24,29 @@ const BetPage = () => {
   if (!question) return <div className="min-h-screen flex items-center justify-center text-gold text-2xl">Loading...</div>;
 
   const multipliers = question.options.map(opt => opt.odds || 1.5);
+
+  const handlePlaceBet = async () => {
+    setMessage('');
+    try {
+      await betsAPI.placeBet({
+        questionId: question._id,
+        option: question.options[selectedOption].label,
+        amount: parseInt(amount, 10)
+      });
+      deductTokens(parseInt(amount, 10));
+      setMessage('Bet placed successfully!');
+      setConfirming(false);
+      // Simulate win for demo: 50% chance
+      if (Math.random() > 0.5) {
+        const winAmount = parseInt(amount, 10) * (question.options[selectedOption].odds || 1.5);
+        creditTokens(winAmount);
+        setMessage(`You won! +${winAmount} tokens`);
+      }
+      // Optionally: navigate(-1) or reset state
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Failed to place bet');
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col items-center justify-center p-4">
@@ -77,7 +100,12 @@ const BetPage = () => {
             <div className="text-gold">Potential Win: <span className="font-bold">{amount && multipliers[selectedOption] ? (parseInt(amount, 10) * multipliers[selectedOption]).toLocaleString() : 0}</span> tokens</div>
             <div className="flex gap-4 mt-2">
               <button className="px-6 py-2 bg-gray-700 text-white rounded-lg" onClick={() => setConfirming(false)}>Cancel</button>
-              <button className="px-6 py-2 bg-gold text-black font-bold rounded-lg">Place Bet</button>
+              <button
+                className="px-6 py-2 bg-gold text-black font-bold rounded-lg"
+                onClick={handlePlaceBet}
+              >
+                Place Bet
+              </button>
             </div>
             {message && <div className="text-red-400 font-bold mt-2">{message}</div>}
           </div>
