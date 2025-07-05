@@ -365,13 +365,14 @@ const HomePage = () => {
       await questionsAPI.update(editingQuestion._id, {
         title: editingQuestion.title,
         description: editingQuestion.description,
-        options: editingQuestion.options
+        options: editingQuestion.options.map(opt => ({ label: opt.label, odds: Number(opt.odds) }))
       });
       setQuestions((qs) => qs.map(q => q._id === editingQuestion._id ? editingQuestion : q));
       setEditModalOpen(false);
       setEditingQuestion(null);
     } catch (err) {
-      alert('Failed to update question');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to update question';
+      alert(errorMsg);
     }
   };
 
