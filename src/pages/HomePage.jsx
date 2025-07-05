@@ -407,12 +407,13 @@ const HomePage = () => {
       ) : questions.length === 0 ? (
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-2 md:px-6 py-8">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-4 py-8">
           {questions.map((question) => (
             <div
               key={question._id}
-              className="cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-center aspect-square p-6"
+              className="cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-center min-h-[320px] p-6 m-0"
               onClick={() => navigate(`/bet/${question._id}`)}
+              style={{ zIndex: 1 }}
             >
               <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2">{question.title}</h3>
               <p className="text-textsecondary mb-3 text-base font-sans text-center">{question.description}</p>
