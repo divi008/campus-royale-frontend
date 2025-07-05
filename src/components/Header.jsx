@@ -9,7 +9,6 @@ import { Link, useLocation } from "react-router-dom";
 const navLinks = [
   { name: "Home", to: "/" },
   { name: "Leaderboard", to: "/leaderboard" },
-  { name: "My Bets", to: "/my-bets" },
 ];
 
 /**

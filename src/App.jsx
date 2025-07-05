@@ -6,7 +6,6 @@ import Header from "./components/Header";
 import HomePage from "./pages/HomePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ProfilePage from "./pages/ProfilePage";
-import MyBetsPage from "./pages/MyBetsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AnimatedCasinoBackground from "./components/CasinoBackground";
@@ -39,7 +38,6 @@ const App = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
-            <Route path="/my-bets" element={<ProtectedRoute><MyBetsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/add-question" element={<ProtectedRoute><AddQuestionPage /></ProtectedRoute>} />
             <Route path="/suggest-question" element={<ProtectedRoute><SuggestQuestionPage /></ProtectedRoute>} />

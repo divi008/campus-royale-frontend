@@ -632,14 +632,6 @@ const HomePage = () => {
                 <option value="resolved">✔️ Resolved</option>
               </select>
 
-              {/* My Bets Link */}
-              <button
-                onClick={() => navigate('/my-bets')}
-                className="px-4 py-2 rounded-lg bg-gold text-black font-bold hover:bg-yellow-400 transition border-2 border-gold"
-              >
-                🎯 My Bets
-              </button>
-
               {/* Sort */}
               <select
                 value={sortBy}
