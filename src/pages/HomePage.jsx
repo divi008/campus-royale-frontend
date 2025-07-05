@@ -515,6 +515,26 @@ const HomePage = () => {
     }
   };
 
+  // Add enter key handler for search:
+  const handleSearchEnter = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      e.preventDefault();
+      // If there are search suggestions, expand the first one
+      if (searchSuggestions.length > 0) {
+        const firstResult = searchSuggestions[0];
+        setSearchQuery('');
+        handleExpand(firstResult._id);
+        // Scroll to the question
+        setTimeout(() => {
+          const element = document.getElementById(`question-${firstResult._id}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-2 pt-12 pb-16">
       {message && (
@@ -549,6 +569,7 @@ const HomePage = () => {
                 className="w-full p-3 pr-10 rounded-lg bg-gray-900 border-2 border-gold text-gold placeholder-gray-400 focus:border-[#00eaff] focus:outline-none"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                onKeyPress={handleSearchEnter}
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gold">
                 🔍

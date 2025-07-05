@@ -16,6 +16,26 @@ export const TokenProvider = ({ children }) => {
   const { user, updateUser } = useAuth();
   const [bets, setBets] = useState([]);
 
+  // Load user's existing bets
+  const loadUserBets = async () => {
+    if (!user) return;
+    try {
+      const response = await betsAPI.myBets();
+      setBets(response.data || []);
+    } catch (error) {
+      console.error('Failed to load user bets:', error);
+    }
+  };
+
+  // Load bets when user changes
+  useEffect(() => {
+    if (user) {
+      loadUserBets();
+    } else {
+      setBets([]);
+    }
+  }, [user]);
+
   const deductTokens = (amount) => {
     if (!user || user.tokens < amount) return false;
     
@@ -60,6 +80,7 @@ export const TokenProvider = ({ children }) => {
     deductTokens,
     creditTokens,
     addBet,
+    loadUserBets, // Export this function to refresh bets
   };
 
   return (
