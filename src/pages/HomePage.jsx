@@ -112,6 +112,11 @@ const HomePage = () => {
     // Status filter
     if (filterStatus === 'live' && question.isResolved) return false;
     if (filterStatus === 'resolved' && !question.isResolved) return false;
+    if (filterStatus === 'mybets') {
+      // Only show questions where user has placed bets
+      const userHasBets = bets.some(bet => bet.questionId === question._id);
+      if (!userHasBets) return false;
+    }
     
     // Tag filter
     if (selectedTags.length > 0) {
@@ -134,16 +139,14 @@ const HomePage = () => {
   const sortedQuestions = [...filteredQuestions].sort((a, b) => {
     switch (sortBy) {
       case 'popular':
-        return (b.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0) - 
-               (a.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0);
-      case 'ending':
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      case 'mybets':
-        // Sort by whether user has bets on the question
-        const aHasBets = bets.some(bet => bet.questionId === a._id);
-        const bHasBets = bets.some(bet => bet.questionId === b._id);
-        return bHasBets - aHasBets;
-      default: // recent
+        // Most Popular: sort by total votes/bets
+        const aTotal = a.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+        const bTotal = b.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+        return bTotal - aTotal;
+      case 'recent':
+        // Recently Added: sort by creation date
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      default:
         return new Date(b.createdAt) - new Date(a.createdAt);
     }
   });
@@ -520,7 +523,21 @@ const HomePage = () => {
       {loading ? (
         <div className="text-center text-gold text-xl">Loading questions...</div>
       ) : sortedQuestions.length === 0 ? (
-        <div className="text-center text-gold text-xl">No questions available</div>
+        <div className="text-center text-gold text-xl py-8">
+          {searchQuery.trim() || selectedTags.length > 0 || filterStatus !== 'all' ? (
+            <div>
+              <div className="text-2xl mb-2">🔍</div>
+              <div className="font-bold">Nothing to show</div>
+              <div className="text-sm text-gray-400 mt-2">Try adjusting your search or filters</div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-2xl mb-2">📝</div>
+              <div className="font-bold">No questions available</div>
+              <div className="text-sm text-gray-400 mt-2">Check back later for new betting questions</div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="w-full px-0 py-8 relative z-10">
           <div className="mb-6 space-y-4">
@@ -547,6 +564,13 @@ const HomePage = () => {
                         setSearchQuery('');
                         // Expand the question card
                         handleExpand(question._id);
+                        // Add a small delay to ensure the expansion happens
+                        setTimeout(() => {
+                          const element = document.getElementById(`question-${question._id}`);
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }, 100);
                       }}
                     >
                       <div className="font-bold">{question.title}</div>
@@ -584,6 +608,7 @@ const HomePage = () => {
                 <option value="all">All Questions</option>
                 <option value="live">⏳ Live</option>
                 <option value="resolved">✔️ Resolved</option>
+                <option value="mybets">🎯 My Bets</option>
               </select>
 
               {/* Sort */}
@@ -594,8 +619,6 @@ const HomePage = () => {
               >
                 <option value="recent">🕒 Recently Added</option>
                 <option value="popular">🔥 Most Popular</option>
-                <option value="ending">⏰ Ending Soon</option>
-                <option value="mybets">🎯 My Bets</option>
               </select>
 
               {/* Tag Filter */}
