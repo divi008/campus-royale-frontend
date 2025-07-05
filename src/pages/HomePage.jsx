@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FaSpinner } from 'react-icons/fa';
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const DUMMY_BETS = [
   {
@@ -112,6 +113,11 @@ const HomePage = () => {
     // Status filter
     if (filterStatus === 'live' && question.isResolved) return false;
     if (filterStatus === 'resolved' && !question.isResolved) return false;
+    if (filterStatus === 'mybets') {
+      // Only show questions where user has placed bets
+      const userHasBets = bets.some(bet => bet.questionId === question._id);
+      if (!userHasBets) return false;
+    }
     
     // Tag filter
     if (selectedTags.length > 0) {
@@ -384,22 +390,30 @@ const HomePage = () => {
       return;
     }
 
-    const result = await addBet({
-      questionId,
-      option: selectedOption[questionId],
-      amount
-    });
+    setLoadingAction(true);
+    try {
+      const result = await addBet({
+        questionId,
+        option: selectedOption[questionId],
+        amount
+      });
 
-    if (result.success) {
-      setMessage(`Bet placed on "${selectedOption[questionId]}"! (-${amount} tokens)`);
-      setConfirming((prev) => ({ ...prev, [questionId]: false }));
-      setPlaced((prev) => ({ ...prev, [questionId]: true }));
-      triggerCelebration(true);
-      animateCard(questionId);
-      setTimeout(() => setPlaced((prev) => ({ ...prev, [questionId]: false })), 2000);
-    } else {
-      setMessage(result.error || "Failed to place bet!");
+      if (result.success) {
+        setMessage(`Bet placed on "${selectedOption[questionId]}"! (-${amount} tokens)`);
+        setConfirming((prev) => ({ ...prev, [questionId]: false }));
+        setPlaced((prev) => ({ ...prev, [questionId]: true }));
+        triggerCelebration(true);
+        animateCard(questionId);
+        setTimeout(() => setPlaced((prev) => ({ ...prev, [questionId]: false })), 2000);
+      } else {
+        setMessage(result.error || "Failed to place bet!");
+        setTimeout(() => setMessage(""), 2000);
+      }
+    } catch (error) {
+      setMessage("Failed to place bet!");
       setTimeout(() => setMessage(""), 2000);
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -448,6 +462,7 @@ const HomePage = () => {
   };
 
   const handleEditSave = async () => {
+    setLoadingAction(true);
     try {
       await questionsAPI.update(editingQuestion._id, {
         title: editingQuestion.title,
@@ -461,6 +476,8 @@ const HomePage = () => {
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Failed to update question';
       alert(errorMsg);
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -471,6 +488,7 @@ const HomePage = () => {
 
   const handleDeleteConfirm = async () => {
     if (!deletingQuestion) return;
+    setLoadingAction(true);
     try {
       await questionsAPI.delete(deletingQuestion._id);
       setQuestions((qs) => qs.filter(q => q._id !== deletingQuestion._id));
@@ -480,6 +498,7 @@ const HomePage = () => {
     } finally {
       setDeleteModalOpen(false);
       setDeletingQuestion(null);
+      setLoadingAction(false);
     }
   };
 
@@ -487,6 +506,7 @@ const HomePage = () => {
   const handleResolve = async () => {
     if (!resolveOption) return setResolveMsg('Select the correct option');
     setResolveMsg('');
+    setLoadingAction(true);
     try {
       await api.post(`/questions/${resolveModal.question._id}/resolve`, { correctOption: resolveOption });
       setResolveMsg('Question resolved and winnings credited!');
@@ -496,17 +516,22 @@ const HomePage = () => {
       setTimeout(() => setResolveModal({ open: false, question: null }), 1500);
     } catch (err) {
       setResolveMsg(err.response?.data?.message || 'Failed to resolve question');
+    } finally {
+      setLoadingAction(false);
     }
   };
 
   const handleUnresolve = async () => {
     setResolveMsg('');
+    setLoadingAction(true);
     try {
       await api.post(`/questions/${resolveModal.question._id}/unresolve`);
       setResolveMsg('Question unresolved and bets reset!');
       setTimeout(() => setResolveModal({ open: false, question: null }), 1500);
     } catch (err) {
       setResolveMsg(err.response?.data?.message || 'Failed to unresolve question');
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -610,6 +635,7 @@ const HomePage = () => {
                 <option value="all">All Questions</option>
                 <option value="live">⏳ Live</option>
                 <option value="resolved">✔️ Resolved</option>
+                <option value="mybets">🎯 My Bets</option>
               </select>
 
               {/* Sort */}
@@ -1019,6 +1045,12 @@ const HomePage = () => {
           </div>
         </div>
       )}
+      
+      {/* Loading Spinner */}
+      <LoadingSpinner 
+        isVisible={loadingAction} 
+        message="Processing your bet..." 
+      />
     </div>
   );
 };

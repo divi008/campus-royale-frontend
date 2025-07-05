@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { questionsAPI, betsAPI } from '../services/api';
 import { useToken } from '../context/TokenContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const BetPage = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const BetPage = () => {
   const [amount, setAmount] = useState(1);
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState('');
+  const [loadingAction, setLoadingAction] = useState(false);
 
   useEffect(() => {
     questionsAPI.getAll().then(res => {
@@ -43,6 +45,7 @@ const BetPage = () => {
 
   const handlePlaceBet = async () => {
     setMessage('');
+    setLoadingAction(true);
     try {
       const betData = {
         questionId: question._id,
@@ -62,11 +65,19 @@ const BetPage = () => {
       }
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to place bet');
+    } finally {
+      setLoadingAction(false);
     }
   };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col items-center justify-center p-4">
+      {/* Loading Spinner */}
+      <LoadingSpinner 
+        isVisible={loadingAction} 
+        message="Processing your bet..." 
+      />
+      
       <div className="w-full max-w-2xl bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20">
         <button onClick={() => navigate(-1)} className="mb-4 text-gold font-bold">&larr; Back</button>
         <h1 className="text-3xl font-bold text-gold mb-2">{question.title}</h1>

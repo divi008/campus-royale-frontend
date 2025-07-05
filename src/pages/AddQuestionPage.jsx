@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { questionsAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const TAGS = [
   'Placement', 'Sports', 'Event', 'Person', '#other'
@@ -19,6 +20,8 @@ const AddQuestionPage = () => {
   const [customTag, setCustomTag] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loadingAction, setLoadingAction] = useState(false);
+  const [message, setMessage] = useState('');
 
   if (!user || user.role !== 'admin') {
     return <div className="text-center text-red-500 font-bold mt-10">Access denied. Admins only.</div>;
@@ -57,6 +60,8 @@ const AddQuestionPage = () => {
       return;
     }
     try {
+      setLoadingAction(true);
+      setMessage('Adding question...');
       await questionsAPI.create({ 
         title, 
         description, 
@@ -72,6 +77,9 @@ const AddQuestionPage = () => {
       setTimeout(() => navigate('/'), 1500);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add question');
+    } finally {
+      setLoadingAction(false);
+      setMessage('');
     }
   };
 
@@ -168,6 +176,7 @@ const AddQuestionPage = () => {
 
         {error && <div className="text-red-500 mb-2 font-bold">{error}</div>}
         {success && <div className="text-green-400 mb-2 font-bold">{success}</div>}
+        {loadingAction && <LoadingSpinner message={message} />}
         <button type="submit" className="w-full py-2 bg-gold text-black font-extrabold rounded hover:bg-yellow-400 transition">Add Question</button>
       </form>
     </div>

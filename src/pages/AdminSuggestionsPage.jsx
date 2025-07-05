@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { suggestionsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const AdminSuggestionsPage = () => {
   const { user } = useAuth();
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
   const [filter, setFilter] = useState('all');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [approveModal, setApproveModal] = useState({ show: false, suggestion: null, formData: {} });
@@ -46,7 +48,7 @@ const AdminSuggestionsPage = () => {
 
   const handleApproveSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingAction(true);
     setMessage({ type: '', text: '' });
 
     try {
@@ -58,7 +60,7 @@ const AdminSuggestionsPage = () => {
       const errorMessage = error.response?.data?.message || 'Failed to approve suggestion';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
-      setLoading(false);
+      setLoadingAction(false);
     }
   };
 
@@ -67,7 +69,7 @@ const AdminSuggestionsPage = () => {
       return;
     }
 
-    setLoading(true);
+    setLoadingAction(true);
     setMessage({ type: '', text: '' });
 
     try {
@@ -78,7 +80,7 @@ const AdminSuggestionsPage = () => {
       const errorMessage = error.response?.data?.message || 'Failed to reject suggestion';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
-      setLoading(false);
+      setLoadingAction(false);
     }
   };
 
@@ -138,6 +140,12 @@ const AdminSuggestionsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+      {/* Loading Spinner */}
+      <LoadingSpinner 
+        isVisible={loadingAction} 
+        message="Processing..." 
+      />
+      
       <div className="max-w-6xl mx-auto">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20">
           <h1 className="text-3xl font-bold text-gold mb-8 text-center">
