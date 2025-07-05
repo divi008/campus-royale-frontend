@@ -2,6 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from "react";
 import { useToken } from "../context/TokenContext";
 import { questionsAPI } from "../services/api";
 import Card from "../components/ui/Card";
+import { useAuth } from "../context/AuthContext";
 
 const DUMMY_BETS = [
   {
@@ -54,6 +55,7 @@ const CYAN = '#00eaff';
 
 const HomePage = () => {
   const { deductTokens, tokens, addBet, creditTokens } = useToken();
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,8 @@ const HomePage = () => {
   const [placed, setPlaced] = useState({});
   const [confetti, setConfetti] = useState([]);
   const cardRefs = useRef({});
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
 
   // Fetch questions from backend
   useEffect(() => {
@@ -326,6 +330,47 @@ const HomePage = () => {
     }
   };
 
+  const handleEditClick = (question) => {
+    setEditingQuestion({ ...question, options: question.options.map(opt => ({ ...opt })) });
+    setEditModalOpen(true);
+  };
+
+  const handleEditOptionChange = (idx, field, value) => {
+    setEditingQuestion((q) => ({
+      ...q,
+      options: q.options.map((opt, i) => i === idx ? { ...opt, [field]: value } : opt)
+    }));
+  };
+
+  const addEditOption = () => {
+    setEditingQuestion((q) => ({
+      ...q,
+      options: [...q.options, { label: '', odds: 1 }]
+    }));
+  };
+
+  const removeEditOption = (idx) => {
+    setEditingQuestion((q) => ({
+      ...q,
+      options: q.options.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleEditSave = async () => {
+    try {
+      await questionsAPI.update(editingQuestion._id, {
+        title: editingQuestion.title,
+        description: editingQuestion.description,
+        options: editingQuestion.options
+      });
+      setQuestions((qs) => qs.map(q => q._id === editingQuestion._id ? editingQuestion : q));
+      setEditModalOpen(false);
+      setEditingQuestion(null);
+    } catch (err) {
+      alert('Failed to update question');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-2 pt-12">
       {message && (
@@ -351,6 +396,14 @@ const HomePage = () => {
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide">{question.title}</h3>
                   <span className="text-xs text-gold bg-[#facc1533] px-3 py-1 rounded-full font-bold shadow">{totalBets} bets</span>
+                  {user && user.role === 'admin' && (
+                    <button
+                      onClick={e => { e.stopPropagation(); handleEditClick(question); }}
+                      className="ml-4 px-3 py-1 bg-gold text-black font-bold rounded shadow hover:bg-yellow-400 border-2 border-gold transition"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
                 <p className="text-textsecondary mb-3 text-base font-sans">{question.description}</p>
                 <div className="flex gap-6 text-sm mb-2">
@@ -537,6 +590,41 @@ const HomePage = () => {
           />
         )
       ))}
+      {/* Edit Modal */}
+      {editModalOpen && editingQuestion && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70">
+          <div className="relative z-[1000] w-full max-w-xl bg-black/95 p-8 rounded-lg border-2 border-gold shadow-2xl">
+            <button onClick={() => setEditModalOpen(false)} className="absolute top-2 right-2 text-gold text-2xl font-bold hover:text-yellow-400">✕</button>
+            <h2 className="text-2xl font-extrabold text-gold mb-4">Edit Question</h2>
+            <div className="mb-4">
+              <label className="block text-gold font-semibold mb-2">Title</label>
+              <input type="text" className="w-full p-2 rounded bg-gray-900 border border-gold text-gold" value={editingQuestion.title} onChange={e => setEditingQuestion(q => ({ ...q, title: e.target.value }))} />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gold font-semibold mb-2">Description</label>
+              <textarea className="w-full p-2 rounded bg-gray-900 border border-gold text-gold" value={editingQuestion.description} onChange={e => setEditingQuestion(q => ({ ...q, description: e.target.value }))} />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gold font-semibold mb-2">Options</label>
+              <div className="space-y-2">
+                {editingQuestion.options.map((opt, idx) => (
+                  <div key={idx} className="flex gap-2 items-center bg-gray-800/80 p-2 rounded-lg border border-gold/40">
+                    <input type="text" placeholder={`Option ${idx + 1} name`} className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.label} onChange={e => handleEditOptionChange(idx, 'label', e.target.value)} />
+                    <input type="number" min="1" step="0.01" placeholder="Odds" className="w-24 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.odds} onChange={e => handleEditOptionChange(idx, 'odds', e.target.value)} />
+                    {editingQuestion.options.length > 2 && (
+                      <button type="button" onClick={() => removeEditOption(idx)} className="text-red-400 font-bold px-2 text-xl hover:text-red-600" title="Remove option">✕</button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={addEditOption} className="flex items-center gap-2 mt-2 px-4 py-2 bg-gold text-black rounded font-bold hover:bg-yellow-400 transition shadow-gold/50 border-2 border-gold">
+                  <span className="text-xl font-bold">+</span> <span>Add Option</span>
+                </button>
+              </div>
+            </div>
+            <button onClick={handleEditSave} className="w-full py-2 bg-gold text-black font-extrabold rounded hover:bg-yellow-400 transition">Save Changes</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
