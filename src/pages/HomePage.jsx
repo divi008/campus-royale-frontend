@@ -407,27 +407,36 @@ const HomePage = () => {
       ) : questions.length === 0 ? (
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-4 py-8">
-          {questions.map((question) => (
-            <div
-              key={question._id}
-              className="cursor-pointer select-none bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-center min-h-[320px] p-6 m-0"
-              onClick={() => navigate(`/bet/${question._id}`)}
-              style={{ zIndex: 1 }}
-            >
-              <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2">{question.title}</h3>
-              <p className="text-textsecondary mb-3 text-base font-sans text-center">{question.description}</p>
-              <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
-                {question.options.map((opt, i) => (
-                  <div key={opt.label} className="flex flex-col items-center min-w-[100px] max-w-[140px] w-full sm:w-auto break-words">
-                    <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
-                    <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
-                    <span className="text-textsecondary">x{opt.odds || 1.5}</span>
-                  </div>
-                ))}
+        <div className="w-full px-4 py-8">
+          {/* Filter/Sort Dropdown Placeholder */}
+          <div className="flex justify-end mb-6">
+            <select className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none">
+              <option>Sort by Most Popular</option>
+              <option>Recently Added</option>
+              <option>Ending Soon</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {questions.map((question) => (
+              <div
+                key={question._id}
+                className="bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start min-h-[320px] p-6 cursor-pointer select-none"
+                onClick={() => navigate(`/bet/${question._id}`)}
+              >
+                <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2">{question.title}</h3>
+                <p className="text-textsecondary mb-3 text-base font-sans text-center">{question.description}</p>
+                <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
+                  {question.options.map((opt, i) => (
+                    <div key={opt.label} className="flex flex-col items-center min-w-[100px] max-w-[140px] w-full sm:w-auto break-words">
+                      <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
+                      <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
+                      <span className="text-textsecondary">x{opt.odds || 1.5}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
       {confetti.map(c => (
