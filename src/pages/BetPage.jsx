@@ -44,7 +44,7 @@ const BetPage = () => {
   const handlePlaceBet = async () => {
     setMessage('');
     try {
-      const res = await betsAPI.placeBet({
+      await betsAPI.placeBet({
         questionId: question._id,
         option: question.options[selectedOption].label,
         amount: parseInt(amount, 10)
@@ -52,7 +52,8 @@ const BetPage = () => {
       deductTokens(parseInt(amount, 10));
       setMessage('Bet placed successfully!');
       setConfirming(false);
-      // No win/loss logic here; admin will resolve later
+      // Redirect to home page after placing bet
+      setTimeout(() => navigate('/'), 500);
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to place bet');
     }
