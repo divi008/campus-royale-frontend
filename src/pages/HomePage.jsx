@@ -425,11 +425,11 @@ const HomePage = () => {
             >
               {isExpanded && (
                 <Card className="bg-cardbg border-2 border-gold shadow-lg">
-                  <div className="flex gap-4 mb-4 mt-2">
+                  <div className="flex flex-wrap gap-4 mb-4 mt-2 justify-center">
                     {multipliers.map((opt, i) => (
                       <button
                         key={opt.label}
-                        className={`flex-1 px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide ${selectedOption[question._id] === opt.label
+                        className={`flex-1 min-w-[120px] max-w-[180px] px-4 py-2 rounded-xl font-bold border-2 transition-all duration-200 text-lg font-display tracking-wide mb-2 ${selectedOption[question._id] === opt.label
                           ? (i % 2 === 0
                             ? 'bg-[#39FF14] border-[#39FF14] text-black shadow-lg'
                             : 'bg-[#FFAC1C] border-[#FFAC1C] text-black shadow-lg')
