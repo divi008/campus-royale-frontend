@@ -52,6 +52,14 @@ export const questionsAPI = {
   delete: (id) => api.delete(`/questions/${id}`),
 };
 
+// Suggestions API calls
+export const suggestionsAPI = {
+  submit: (suggestionData) => api.post('/suggestions', suggestionData),
+  getAll: (status) => api.get(`/suggestions${status ? `?status=${status}` : ''}`),
+  approve: (id, data) => api.put(`/suggestions/${id}/approve`, data),
+  reject: (id) => api.put(`/suggestions/${id}/reject`),
+};
+
 // Bets API calls
 export const betsAPI = {
   placeBet: (betData) => api.post('/place-bet', betData),

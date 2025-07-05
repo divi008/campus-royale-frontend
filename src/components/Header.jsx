@@ -10,6 +10,7 @@ const navLinks = [
   { name: "Home", to: "/" },
   { name: "Leaderboard", to: "/leaderboard" },
   { name: "My Bets", to: "/my-bets" },
+  { name: "Suggest Question", to: "/suggest-question" },
 ];
 
 /**
@@ -94,7 +95,10 @@ const Header = () => {
               <div className="px-4 py-2 text-gold font-bold text-sm">Winnings: <span className="font-extrabold">₹{winnings.toLocaleString()}</span></div>
               <Link to="/profile" className="block px-4 py-2 text-gold hover:bg-gold/10">Profile</Link>
               {user.role === 'admin' && (
-                <Link to="/add-question" className="block px-4 py-2 text-gold hover:bg-gold/10">Add Question</Link>
+                <>
+                  <Link to="/add-question" className="block px-4 py-2 text-gold hover:bg-gold/10">Add Question</Link>
+                  <Link to="/admin/suggestions" className="block px-4 py-2 text-gold hover:bg-gold/10">Review Suggestions</Link>
+                </>
               )}
               <button
                 onClick={logout}
