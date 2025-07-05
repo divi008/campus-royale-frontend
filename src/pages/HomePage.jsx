@@ -5,6 +5,7 @@ import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { FaSpinner } from 'react-icons/fa';
 
 const DUMMY_BETS = [
   {
@@ -78,7 +79,9 @@ const HomePage = () => {
   const [resolveModal, setResolveModal] = useState({ open: false, question: null });
   const [resolveOption, setResolveOption] = useState('');
   const [resolveMsg, setResolveMsg] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
+  const [loadingAction, setLoadingAction] = useState(false);
 
   // Fetch questions from backend
   useEffect(() => {
@@ -97,10 +100,20 @@ const HomePage = () => {
     fetchQuestions();
   }, []);
 
+  // Filtering logic
+  let filteredQuestions = questions;
+  if (filterStatus === 'live') filteredQuestions = filteredQuestions.filter(q => !q.isResolved);
+  if (filterStatus === 'resolved') filteredQuestions = filteredQuestions.filter(q => q.isResolved);
+
   // Sorting logic
-  const sortedQuestions = [...questions].sort((a, b) => {
+  const sortedQuestions = [...filteredQuestions].sort((a, b) => {
     if (sortBy === 'recent') {
       return new Date(b.createdAt) - new Date(a.createdAt);
+    } else if (sortBy === 'ending') {
+      return new Date(a.deadline || 0) - new Date(b.deadline || 0);
+    } else if (sortBy === 'mybets') {
+      // Optionally, sort by questions the user has bet on (requires user bet data)
+      return 0;
     } else {
       // Most Popular: sort by total tokens bet
       const aTotal = a.options.reduce((sum, o) => sum + (o.votes || 0), 0);
@@ -453,7 +466,19 @@ const HomePage = () => {
       ) : (
         <div className="w-full px-0 py-8 relative z-10">
           {/* Filter/Sort Dropdown Placeholder */}
-          <div className="flex justify-end mb-6 px-4">
+          <div className="flex flex-wrap gap-4 justify-between mb-6 px-4 items-center">
+            <div className="flex gap-2">
+              <select
+                className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none"
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="live">⏳ Live</option>
+                <option value="resolved">✔️ Resolved</option>
+              </select>
+              {/* Add category filter here if you have categories */}
+            </div>
             <select
               className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none"
               value={sortBy}
@@ -461,10 +486,16 @@ const HomePage = () => {
             >
               <option value="popular">Sort by Most Popular</option>
               <option value="recent">Recently Added</option>
+              <option value="ending">Ending Soon</option>
+              <option value="mybets">My Bets</option>
             </select>
           </div>
           <div className="grid grid-cols-1 gap-6 w-full relative z-10">
-            {sortedQuestions.map((question) => (
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <FaSpinner className="animate-spin text-gold text-4xl" />
+              </div>
+            ) : sortedQuestions.map((question) => (
               <div
                 key={question._id}
                 className="relative z-20 bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start p-6 cursor-pointer select-none w-full mx-0 h-auto"
@@ -499,12 +530,17 @@ const HomePage = () => {
                     </button>
                   </div>
                 )}
-                {question.isResolved && (
-                  <div className="absolute top-4 left-4 z-30">
-                    <span className="inline-block px-3 py-1 bg-green-700 text-gold font-bold rounded-full text-xs">Result Declared</span>
+                {/* Animated status badge */}
+                <div className="absolute top-4 left-4 z-30">
+                  {question.isResolved ? (
+                    <span className="inline-block px-3 py-1 bg-green-700 text-gold font-bold rounded-full text-xs animate-bounce">✔️ Resolved</span>
+                  ) : (
+                    <span className="inline-block px-3 py-1 bg-blue-700 text-gold font-bold rounded-full text-xs animate-pulse">⏳ Live</span>
+                  )}
+                  {question.isResolved && (
                     <div className="text-xs text-gold font-bold mt-1">Answer: {question.correctOption}</div>
-                  </div>
-                )}
+                  )}
+                </div>
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-gold drop-shadow-gold tracking-wide break-words text-center mb-2 w-full">{question.title}</h3>
                 <p className="text-textsecondary mb-3 text-base font-sans text-center w-full">{question.description}</p>
                 <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center w-full">
