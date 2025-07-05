@@ -108,6 +108,13 @@ const HomePage = () => {
     fetchQuestions();
   }, []);
 
+  // Refresh bets when My Bets filter is selected
+  useEffect(() => {
+    if (filterStatus === 'mybets' && user) {
+      loadUserBets();
+    }
+  }, [filterStatus, user]);
+
   // Comprehensive filtering and sorting logic:
   const filteredQuestions = questions.filter(question => {
     // Status filter
@@ -115,7 +122,21 @@ const HomePage = () => {
     if (filterStatus === 'resolved' && !question.isResolved) return false;
     if (filterStatus === 'mybets') {
       // Only show questions where user has placed bets
-      const userHasBets = bets.some(bet => bet.questionId === question._id);
+      // Debug: Log bets and question ID for troubleshooting
+      console.log('Checking My Bets filter:', {
+        questionId: question._id,
+        betsCount: bets.length,
+        bets: bets,
+        userHasBets: bets.some(bet => bet.questionId === question._id || bet.question === question._id)
+      });
+      
+      // Check both possible bet structures (questionId or question field)
+      const userHasBets = bets.some(bet => 
+        bet.questionId === question._id || 
+        bet.question === question._id ||
+        bet.questionId === question._id
+      );
+      
       if (!userHasBets) return false;
     }
     
@@ -557,7 +578,20 @@ const HomePage = () => {
         <div className="text-center text-gold text-xl">Loading questions...</div>
       ) : sortedQuestions.length === 0 ? (
         <div className="text-center text-gold text-xl py-8">
-          {searchQuery.trim() || selectedTags.length > 0 || filterStatus !== 'all' ? (
+          {filterStatus === 'mybets' ? (
+            <div>
+              <div className="text-2xl mb-2">🎯</div>
+              <div className="font-bold">No bets placed yet</div>
+              <div className="text-sm text-gray-400 mt-2">Place some bets to see them here!</div>
+              <div className="text-xs text-gray-500 mt-1">Debug: {bets.length} bets loaded</div>
+              <button 
+                onClick={() => loadUserBets()}
+                className="mt-4 px-4 py-2 bg-gold text-black font-bold rounded hover:bg-yellow-400"
+              >
+                Refresh Bets
+              </button>
+            </div>
+          ) : searchQuery.trim() || selectedTags.length > 0 || filterStatus !== 'all' ? (
             <div>
               <div className="text-2xl mb-2">🔍</div>
               <div className="font-bold">Nothing to show</div>
