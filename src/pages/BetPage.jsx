@@ -6,7 +6,7 @@ import { useToken } from '../context/TokenContext';
 const BetPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { tokens, deductTokens, creditTokens } = useToken();
+  const { tokens, deductTokens, creditTokens, addBet } = useToken();
   const [question, setQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [amount, setAmount] = useState(1);
@@ -44,16 +44,22 @@ const BetPage = () => {
   const handlePlaceBet = async () => {
     setMessage('');
     try {
-      await betsAPI.placeBet({
+      const betData = {
         questionId: question._id,
         option: question.options[selectedOption].label,
         amount: parseInt(amount, 10)
-      });
-      deductTokens(parseInt(amount, 10));
-      setMessage('Bet placed successfully!');
-      setConfirming(false);
-      // Redirect to home page after placing bet
-      setTimeout(() => navigate('/'), 500);
+      };
+      
+      const result = await addBet(betData);
+      
+      if (result.success) {
+        setMessage('Bet placed successfully!');
+        setConfirming(false);
+        // Redirect to home page after placing bet
+        setTimeout(() => navigate('/'), 500);
+      } else {
+        setMessage(result.error || 'Failed to place bet');
+      }
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to place bet');
     }

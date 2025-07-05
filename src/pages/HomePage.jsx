@@ -115,13 +115,6 @@ const HomePage = () => {
     if (filterStatus === 'mybets') {
       // Only show questions where user has placed bets
       const userHasBets = bets.some(bet => bet.questionId === question._id);
-      console.log('My Bets Debug:', { 
-        questionId: question._id, 
-        questionTitle: question.title, 
-        userHasBets, 
-        totalBets: bets.length,
-        betIds: bets.map(b => b.questionId)
-      });
       if (!userHasBets) return false;
     }
     
@@ -526,18 +519,11 @@ const HomePage = () => {
   const handleSearchEnter = (e) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       e.preventDefault();
-      // If there are search suggestions, expand the first one
+      // If there are search suggestions, navigate to the first one
       if (searchSuggestions.length > 0) {
         const firstResult = searchSuggestions[0];
         setSearchQuery('');
-        handleExpand(firstResult._id);
-        // Scroll to the question
-        setTimeout(() => {
-          const element = document.getElementById(`question-${firstResult._id}`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
+        navigate(`/bet/${firstResult._id}`);
       }
     }
   };
@@ -590,15 +576,8 @@ const HomePage = () => {
                       className="w-full p-3 text-left text-gold hover:bg-gray-800 border-b border-gold/20 last:border-b-0"
                       onClick={() => {
                         setSearchQuery('');
-                        // Expand the question card
-                        handleExpand(question._id);
-                        // Add a small delay to ensure the expansion happens
-                        setTimeout(() => {
-                          const element = document.getElementById(`question-${question._id}`);
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }
-                        }, 100);
+                        // Navigate to the betting page
+                        navigate(`/bet/${question._id}`);
                       }}
                     >
                       <div className="font-bold">{question.title}</div>
@@ -704,7 +683,7 @@ const HomePage = () => {
                 key={question._id}
                 id={`question-${question._id}`}
                 className="relative z-20 bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start p-6 cursor-pointer select-none w-full mx-0 h-auto"
-                onClick={() => handleExpand(question._id)}
+                onClick={() => navigate(`/bet/${question._id}`)}
               >
                 {/* Admin Edit/Delete Buttons */}
                 {user && user.role === 'admin' && (
@@ -768,69 +747,6 @@ const HomePage = () => {
                         {tag}
                       </span>
                     ))}
-                  </div>
-                )}
-
-                {/* Expanded Betting Interface */}
-                {expanded === question._id && (
-                  <div className="w-full mt-6 p-4 bg-gray-900/50 rounded-lg border border-gold/30">
-                    <h4 className="text-lg font-bold text-gold mb-4 text-center">Place Your Bet</h4>
-                    
-                    {/* Option Selection */}
-                    <div className="mb-4">
-                      <label className="block text-gold font-semibold mb-2">Select Option:</label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {question.options.map((option, index) => (
-                          <button
-                            key={option.label}
-                            onClick={() => handleSelectOption(question._id, option.label)}
-                            className={`p-3 rounded-lg border-2 transition-all ${
-                              selectedOption[question._id] === option.label
-                                ? 'bg-[#00eaff] border-[#00eaff] text-black'
-                                : 'bg-gray-800 border-gold text-gold hover:bg-gray-700'
-                            }`}
-                          >
-                            <div className="font-bold">{option.label}</div>
-                            <div className="text-sm">Odds: {option.odds || 1.5}x</div>
-                            <div className="text-xs">{option.votes || 0} bets</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Bet Amount */}
-                    {selectedOption[question._id] && (
-                      <div className="mb-4">
-                        <label className="block text-gold font-semibold mb-2">
-                          Bet Amount (You have {tokens} tokens):
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Enter amount"
-                          value={betAmounts[question._id] || ''}
-                          onChange={(e) => handleAmountChange(question._id, e.target.value)}
-                          className="w-full p-3 rounded bg-gray-800 border border-gold text-gold"
-                        />
-                      </div>
-                    )}
-
-                    {/* Place Bet Button */}
-                    {selectedOption[question._id] && betAmounts[question._id] && (
-                      <div className="text-center">
-                        <button
-                          onClick={() => handleConfirm(question._id)}
-                          disabled={loadingAction}
-                          className="px-6 py-3 bg-gold text-black font-bold rounded-lg hover:bg-yellow-400 transition disabled:opacity-50"
-                        >
-                          {loadingAction ? 'Placing Bet...' : `Place Bet (${betAmounts[question._id]} tokens)`}
-                        </button>
-                        {confirming[question._id] && (
-                          <div className="mt-2 text-sm text-gold">
-                            Potential winnings: {Math.round(betAmounts[question._id] * (question.options.find(opt => opt.label === selectedOption[question._id])?.odds || 1.5))} tokens
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
