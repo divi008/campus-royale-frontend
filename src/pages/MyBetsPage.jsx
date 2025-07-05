@@ -43,7 +43,7 @@ const MyBetsPage = () => {
               <tbody>
                 {bets.map(bet => (
                   <tr key={bet._id} className="border-b border-white/10 hover:bg-white/5">
-                    <td className="py-2 px-3">{bet.questionId}</td>
+                    <td className="py-2 px-3">{bet.questionId && bet.questionId.title ? bet.questionId.title : bet.questionId}</td>
                     <td className="py-2 px-3">{bet.option}</td>
                     <td className="py-2 px-3">{bet.amount}</td>
                     <td className="py-2 px-3">x{bet.odds}</td>
