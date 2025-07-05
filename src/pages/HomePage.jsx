@@ -374,7 +374,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-2 pt-12">
+    <div className="max-w-2xl mx-auto px-2 pt-12 pb-16">
       {message && (
         <div className="mb-4 text-center text-base font-display text-gold font-bold animate-pulse drop-shadow-gold">{message}</div>
       )}
@@ -443,7 +443,7 @@ const HomePage = () => {
                     ))}
                   </div>
                   {selectedOption[question._id] && (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 mt-4 mb-8 pb-8 min-h-[180px] sm:min-h-[140px]">
                       <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                         <span className="text-gold font-bold text-lg">Bet:</span>
                         <input
