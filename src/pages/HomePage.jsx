@@ -4,6 +4,7 @@ import { questionsAPI } from "../services/api";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const DUMMY_BETS = [
   {
@@ -74,6 +75,9 @@ const HomePage = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingQuestion, setDeletingQuestion] = useState(null);
   const navigate = useNavigate();
+  const [resolveModal, setResolveModal] = useState({ open: false, question: null });
+  const [resolveOption, setResolveOption] = useState('');
+  const [resolveMsg, setResolveMsg] = useState('');
 
   // Fetch questions from backend
   useEffect(() => {
@@ -397,6 +401,19 @@ const HomePage = () => {
     }
   };
 
+  // Handler for resolve
+  const handleResolve = async () => {
+    if (!resolveOption) return setResolveMsg('Select the correct option');
+    setResolveMsg('');
+    try {
+      await api.post(`/questions/${resolveModal.question._id}/resolve`, { correctOption: resolveOption });
+      setResolveMsg('Question resolved and winnings credited!');
+      setTimeout(() => setResolveModal({ open: false, question: null }), 1500);
+    } catch (err) {
+      setResolveMsg(err.response?.data?.message || 'Failed to resolve question');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-2 pt-12 pb-16">
       {message && (
@@ -437,6 +454,12 @@ const HomePage = () => {
                       className="px-3 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 border-2 border-red-400 transition"
                     >
                       Delete
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); setResolveModal({ open: true, question }); setResolveOption(''); setResolveMsg(''); }}
+                      className="px-3 py-1 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 border-2 border-blue-400 transition"
+                    >
+                      Resolve
                     </button>
                   </div>
                 )}
@@ -608,6 +631,42 @@ const HomePage = () => {
             <div className="flex gap-4 justify-end">
               <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 rounded bg-gray-700 text-gold border border-gold font-bold hover:bg-gray-800">Cancel</button>
               <button onClick={handleDeleteConfirm} className="px-4 py-2 rounded bg-red-500 text-white border border-red-400 font-bold hover:bg-red-600">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Resolve Modal */}
+      {resolveModal.open && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-cardbg border-2 border-gold rounded-2xl p-8 w-full max-w-md">
+            <h2 className="text-2xl font-bold text-gold mb-4">Resolve Question</h2>
+            <div className="mb-4">
+              <label className="block text-gold font-semibold mb-2">Select the correct option:</label>
+              <select
+                className="w-full p-3 rounded border border-gold bg-gray-900 text-gold"
+                value={resolveOption}
+                onChange={e => setResolveOption(e.target.value)}
+              >
+                <option value="">-- Select --</option>
+                {resolveModal.question.options.map(opt => (
+                  <option key={opt.label} value={opt.label}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            {resolveMsg && <div className="mb-4 text-center text-gold font-bold">{resolveMsg}</div>}
+            <div className="flex gap-4 justify-end">
+              <button
+                onClick={() => setResolveModal({ open: false, question: null })}
+                className="px-4 py-2 bg-gray-700 text-white rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResolve}
+                className="px-4 py-2 bg-gold text-black font-bold rounded-lg"
+              >
+                Resolve
+              </button>
             </div>
           </div>
         </div>
