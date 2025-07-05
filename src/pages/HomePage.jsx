@@ -405,7 +405,7 @@ const HomePage = () => {
       ) : questions.length === 0 ? (
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {questions.map((question) => {
             const options = question.options;
             const multipliers = calculateMultipliers(options);
@@ -660,24 +660,27 @@ const HomePage = () => {
               <label className="block text-gold font-semibold mb-2">Options</label>
               <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
                 {editingQuestion.options.map((opt, idx) => (
-                  <div key={idx} className="flex gap-2 mb-2">
+                  <div key={idx} className="flex gap-2 items-center bg-gray-800/80 p-2 rounded-lg border border-gold/40 mb-2">
                     <input
                       type="text"
+                      placeholder={`Option ${idx + 1} name`}
+                      className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold"
                       value={opt.label}
                       onChange={e => handleEditOptionChange(idx, 'label', e.target.value)}
-                      className="flex-1 p-2 rounded border border-gold"
-                      placeholder="Option label"
                     />
                     <input
                       type="number"
-                      value={opt.odds}
                       min="1"
                       step="0.01"
-                      onChange={e => handleEditOptionChange(idx, 'odds', e.target.value)}
-                      className="w-20 p-2 rounded border border-gold"
                       placeholder="Odds"
+                      className="w-24 p-2 rounded bg-gray-900 border border-gold text-gold"
+                      value={opt.odds ?? 1.5}
+                      onChange={e => handleEditOptionChange(idx, 'odds', e.target.value)}
+                      onBlur={e => { if (!e.target.value) handleEditOptionChange(idx, 'odds', 1.5); }}
                     />
-                    <button onClick={() => removeEditOption(idx)} className="px-2 py-1 bg-red-500 text-white rounded">✕</button>
+                    {editingQuestion.options.length > 2 && (
+                      <button type="button" onClick={() => removeEditOption(idx)} className="text-red-400 font-bold px-2 text-xl hover:text-red-600" title="Remove option">✕</button>
+                    )}
                   </div>
                 ))}
                 <button type="button" onClick={addEditOption} className="flex items-center gap-2 mt-2 px-4 py-2 bg-gold text-black rounded font-bold hover:bg-yellow-400 transition shadow-gold/50 border-2 border-gold">
