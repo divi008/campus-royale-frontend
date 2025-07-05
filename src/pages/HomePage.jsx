@@ -78,6 +78,7 @@ const HomePage = () => {
   const [resolveModal, setResolveModal] = useState({ open: false, question: null });
   const [resolveOption, setResolveOption] = useState('');
   const [resolveMsg, setResolveMsg] = useState('');
+  const [sortBy, setSortBy] = useState('popular');
 
   // Fetch questions from backend
   useEffect(() => {
@@ -95,6 +96,18 @@ const HomePage = () => {
 
     fetchQuestions();
   }, []);
+
+  // Sorting logic
+  const sortedQuestions = [...questions].sort((a, b) => {
+    if (sortBy === 'recent') {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    } else {
+      // Most Popular: sort by total tokens bet
+      const aTotal = a.options.reduce((sum, o) => sum + (o.votes || 0), 0);
+      const bTotal = b.options.reduce((sum, o) => sum + (o.votes || 0), 0);
+      return bTotal - aTotal;
+    }
+  });
 
   const handleExpand = (betId) => {
     setExpanded(expanded === betId ? null : betId);
@@ -435,20 +448,23 @@ const HomePage = () => {
       )}
       {loading ? (
         <div className="text-center text-gold text-xl">Loading questions...</div>
-      ) : questions.length === 0 ? (
+      ) : sortedQuestions.length === 0 ? (
         <div className="text-center text-gold text-xl">No questions available</div>
       ) : (
         <div className="w-full px-0 py-8 relative z-10">
           {/* Filter/Sort Dropdown Placeholder */}
           <div className="flex justify-end mb-6 px-4">
-            <select className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none">
-              <option>Sort by Most Popular</option>
-              <option>Recently Added</option>
-              <option>Ending Soon</option>
+            <select
+              className="bg-cardbg border border-gold text-gold rounded-lg px-4 py-2 shadow focus:outline-none"
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+            >
+              <option value="popular">Sort by Most Popular</option>
+              <option value="recent">Recently Added</option>
             </select>
           </div>
           <div className="grid grid-cols-1 gap-6 w-full relative z-10">
-            {questions.map((question) => (
+            {sortedQuestions.map((question) => (
               <div
                 key={question._id}
                 className="relative z-20 bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start p-6 cursor-pointer select-none w-full mx-0 h-auto"
