@@ -90,6 +90,7 @@ const HomePage = () => {
   const [loadingAction, setLoadingAction] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(null);
 
   // Fetch questions from backend
   useEffect(() => {
@@ -494,6 +495,24 @@ const HomePage = () => {
     }
   };
 
+  // Handle admin dropdown toggle
+  const toggleAdminDropdown = (questionId, e) => {
+    e.stopPropagation();
+    setAdminDropdownOpen(adminDropdownOpen === questionId ? null : questionId);
+  };
+
+  // Close admin dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setAdminDropdownOpen(null);
+    };
+    
+    if (adminDropdownOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [adminDropdownOpen]);
+
   return (
     <div className="max-w-2xl mx-auto px-2 pt-12 pb-16">
       {message && (
@@ -650,33 +669,47 @@ const HomePage = () => {
                 className="relative z-20 bg-cardbg border-2 border-gold shadow-lg hover:shadow-gold transition-all duration-300 rounded-2xl flex flex-col items-center justify-start p-6 cursor-pointer select-none w-full mx-0 h-auto"
                 onClick={() => navigate(`/bet/${question._id}`)}
               >
-                {/* Admin Edit/Delete Buttons */}
+                {/* Admin Dropdown Menu */}
                 {user && user.role === 'admin' && (
-                  <div className="absolute top-4 right-4 flex gap-2 z-30">
+                  <div className="absolute top-4 right-4 z-30">
                     <button
-                      onClick={e => { e.stopPropagation(); handleEditClick(question); }}
-                      className="px-3 py-1 bg-gold text-black font-bold rounded shadow hover:bg-yellow-400 border-2 border-gold transition"
+                      onClick={(e) => toggleAdminDropdown(question._id, e)}
+                      className="text-gold hover:text-yellow-400 transition-colors p-1"
                     >
-                      Edit
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
                     </button>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDeleteClick(question); }}
-                      className="px-3 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 border-2 border-red-400 transition"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={e => { e.stopPropagation(); setResolveModal({ open: true, question }); setResolveOption(''); setResolveMsg(''); }}
-                      className="px-3 py-1 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 border-2 border-blue-400 transition"
-                    >
-                      Resolve
-                    </button>
-                    <button
-                      onClick={e => { e.stopPropagation(); setResolveModal({ open: true, question }); setResolveOption(''); setResolveMsg(''); handleUnresolve(); }}
-                      className="px-3 py-1 bg-gray-500 text-white font-bold rounded shadow hover:bg-gray-600 border-2 border-gray-400 transition"
-                    >
-                      Unresolve
-                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {adminDropdownOpen === question._id && (
+                      <div className="absolute right-0 top-8 bg-gray-900 border-2 border-gold rounded-lg shadow-xl z-40 min-w-32">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEditClick(question); setAdminDropdownOpen(null); }}
+                          className="w-full px-3 py-2 text-left text-gold hover:bg-gray-800 border-b border-gold/20 text-sm"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteClick(question); setAdminDropdownOpen(null); }}
+                          className="w-full px-3 py-2 text-left text-red-400 hover:bg-gray-800 border-b border-gold/20 text-sm"
+                        >
+                          🗑️ Delete
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setResolveModal({ open: true, question }); setResolveOption(''); setResolveMsg(''); setAdminDropdownOpen(null); }}
+                          className="w-full px-3 py-2 text-left text-blue-400 hover:bg-gray-800 border-b border-gold/20 text-sm"
+                        >
+                          ✅ Resolve
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setResolveModal({ open: true, question }); setResolveOption(''); setResolveMsg(''); handleUnresolve(); setAdminDropdownOpen(null); }}
+                          className="w-full px-3 py-2 text-left text-gray-400 hover:bg-gray-800 text-sm"
+                        >
+                          🔄 Unresolve
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
                 {/* Animated status badge */}
