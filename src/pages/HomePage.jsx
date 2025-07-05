@@ -408,7 +408,7 @@ const HomePage = () => {
                   )}
                 </div>
                 <p className="text-textsecondary mb-3 text-base font-sans">{question.description}</p>
-                <div className="flex gap-4 text-sm mb-2 justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-gold/40 scrollbar-track-transparent pb-2">
+                <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
                   {options.map((opt, i) => (
                     <div key={opt.label} className="flex flex-col items-center min-w-[120px] max-w-[160px] w-full sm:w-auto">
                       <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
@@ -444,7 +444,7 @@ const HomePage = () => {
                   </div>
                   {selectedOption[question._id] && (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                         <span className="text-gold font-bold text-lg">Bet:</span>
                         <input
                           type="range"
@@ -454,6 +454,14 @@ const HomePage = () => {
                           onChange={e => handleAmountChange(question._id, e.target.value)}
                           className="flex-1 h-2 bg-gradient-to-r from-gold/30 to-transparent rounded-lg appearance-none cursor-pointer outline-none transition-all duration-200"
                           style={{ accentColor: '#FFD700' }}
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          max={tokens}
+                          value={betAmounts[question._id] || 1}
+                          onChange={e => handleAmountChange(question._id, e.target.value)}
+                          className="w-20 p-2 rounded bg-gray-900 border border-gold text-gold text-center font-bold"
                         />
                         <span className="flex items-center gap-1 text-gold font-bold text-lg">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6 inline-block"><circle cx="12" cy="12" r="10" fill="#FFD700" /><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#222" fontWeight="bold">₹</text></svg>
