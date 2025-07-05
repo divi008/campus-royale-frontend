@@ -35,11 +35,13 @@ const DUMMY_BETS = [
 ];
 
 function calculateMultipliers(options) {
-  const total = options.reduce((sum, o) => sum + o.tokens, 0) || 1;
+  const total = options.reduce((sum, o) => sum + (typeof o.tokens === 'number' ? o.tokens : 0), 0) || 1;
   return options.map((opt) => {
     let base = 1.5;
-    let multiplier = (total / (opt.tokens + 1)) * base;
+    let optTokens = typeof opt.tokens === 'number' ? opt.tokens : 0;
+    let multiplier = (total / (optTokens + 1)) * base;
     multiplier = Math.max(1.2, Math.min(multiplier, 5));
+    if (isNaN(multiplier) || !isFinite(multiplier)) multiplier = 1.0;
     return { ...opt, multiplier: parseFloat(multiplier.toFixed(2)) };
   });
 }
@@ -406,10 +408,10 @@ const HomePage = () => {
                   )}
                 </div>
                 <p className="text-textsecondary mb-3 text-base font-sans">{question.description}</p>
-                <div className="flex gap-6 text-sm mb-2">
+                <div className="flex flex-wrap gap-4 text-sm mb-2 justify-center">
                   {options.map((opt, i) => (
-                    <div key={opt.label} className="flex flex-col items-center">
-                      <span className="font-bold" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
+                    <div key={opt.label} className="flex flex-col items-center min-w-[120px] max-w-[160px] w-full sm:w-auto">
+                      <span className="font-bold break-words text-center" style={{ color: '#00eaff', fontFamily: 'inherit' }}>{opt.label}</span>
                       <span className="mt-1 px-2 py-0.5 rounded-full text-xs font-bold shadow bg-[#00eaff22] text-[#00eaff]">{opt.votes} bets</span>
                       <span className="text-textsecondary">x{multipliers[i].multiplier}</span>
                     </div>
@@ -592,8 +594,8 @@ const HomePage = () => {
       ))}
       {/* Edit Modal */}
       {editModalOpen && editingQuestion && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70">
-          <div className="relative z-[1000] w-full max-w-xl bg-black/95 p-8 rounded-lg border-2 border-gold shadow-2xl">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 p-2 overflow-y-auto">
+          <div className="relative z-[1000] w-full max-w-xl bg-black/95 p-4 sm:p-8 rounded-lg border-2 border-gold shadow-2xl max-h-[95vh] overflow-y-auto">
             <button onClick={() => setEditModalOpen(false)} className="absolute top-2 right-2 text-gold text-2xl font-bold hover:text-yellow-400">✕</button>
             <h2 className="text-2xl font-extrabold text-gold mb-4">Edit Question</h2>
             <div className="mb-4">
@@ -606,7 +608,7 @@ const HomePage = () => {
             </div>
             <div className="mb-4">
               <label className="block text-gold font-semibold mb-2">Options</label>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
                 {editingQuestion.options.map((opt, idx) => (
                   <div key={idx} className="flex gap-2 items-center bg-gray-800/80 p-2 rounded-lg border border-gold/40">
                     <input type="text" placeholder={`Option ${idx + 1} name`} className="flex-1 p-2 rounded bg-gray-900 border border-gold text-gold" value={opt.label} onChange={e => handleEditOptionChange(idx, 'label', e.target.value)} />
